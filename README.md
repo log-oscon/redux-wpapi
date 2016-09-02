@@ -48,11 +48,9 @@ export class HomePage extends React.Component {
     const { status, data: posts } = this.props.request;
 
     if (!posts) {
-      switch (status === ResponseStatus.WAITING) {
-        return (<div>Loading…</div>);
-      }
-      if (status === ResponseStatus.ERROR) {
-        return (<div>An error has occurred</div>);
+      switch (status) {
+          case ResponseStatus.WAITING: return <div>Loading…</div>;
+          case ResponseStatus.ERROR: return <div>An error has occurred</div>;
       }
     }
 
