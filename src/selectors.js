@@ -28,8 +28,11 @@ export const selectQuery = name => createSelector(
 
       const uid = currentRequest.get('uid');
       const page = currentRequest.get('page');
+
       if (uid) {
-        return cache.getIn([uid, page]).merge(cache.getIn([uid, 'pagination']));
+        return currentRequest
+        .merge(cache.getIn([uid, page]))
+        .merge(cache.getIn([uid, 'pagination']));
       }
 
       return currentRequest;
