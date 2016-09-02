@@ -1,0 +1,59 @@
+{
+  "root": true,
+
+  "parser": "babel-eslint",
+
+  "plugins": [
+    "babel",
+    "import"
+  ],
+
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "jasmine": true,
+    "node": false
+  },
+
+  globals: {
+    __DEV__: false,
+    process: false
+  },
+
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true,
+      "experimentalObjectRestSpread": true
+    },
+  },
+
+  "settings": {
+    "import/extensions": [ ".js" ],
+    "import/resolver": "node"
+  },
+
+  "extends": [ "airbnb" ],
+
+  "rules": {
+    "no-unused-vars": [2, { "vars": "all", "args": "after-used" }],
+    "quotes": [2, "single"],
+    "strict": [2, "never"],
+    "no-unexpected-multiline": 2,
+    "no-multi-spaces": [2, {
+      "exceptions": { "VariableDeclarator": true }
+    }],
+
+    "import/default": 1,
+    "import/export": 1,
+    "import/named": 1,
+    "import/namespace": [1, { "allowComputed": true }],
+    "import/no-amd": 1,
+    "import/no-duplicates": 1,
+    "import/no-extraneous-dependencies": 1,
+    "import/no-named-as-default": 1,
+    "import/no-named-as-default-member": 1,
+    "import/no-unresolved": 2
+  }
+}

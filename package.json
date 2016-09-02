@@ -1,0 +1,54 @@
+{
+  "name": "redux-wpapi",
+  "version": "0.1.0",
+  "description": "Wordpress integration Redux middleware based on node-wpapi.",
+  "main": "lib/index.js",
+  "files": [
+    "dist",
+    "lib",
+    "es",
+    "src"
+  ],
+  "scripts": {
+    "clean": "rimraf lib dist es coverage",
+    "lint": "eslint src test",
+    "test": "cross-env BABEL_ENV=commonjs mocha --compilers js:babel-register --recursive",
+    "test:watch": "npm test -- --watch",
+    "check:src": "npm run lint && npm run test",
+    "build:commonjs": "cross-env BABEL_ENV=commonjs babel src --out-dir lib",
+    "build:es": "cross-env BABEL_ENV=es babel src --out-dir es",
+    "build:umd": "cross-env BABEL_ENV=commonjs NODE_ENV=development webpack src/index.js dist/redux-wp.js",
+    "build:umd:min": "cross-env BABEL_ENV=commonjs NODE_ENV=production webpack src/index.js dist/redux-wp.min.js",
+    "build": "npm run build:commonjs && npm run build:es && npm run build:umd && npm run build:umd:min",
+    "prepublish": "npm run clean && npm run check:src && npm run build"
+  },
+  "author": "log.OSCON <engenharia@log.pt> (http://www.log.pt/)",
+  "license": "MIT",
+  "dependencies": {
+    "immutable": "^3.8.1",
+    "lodash": "^4.15.0",
+    "qs": "^6.2.1",
+    "reselect": "^2.5.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.14.0",
+    "babel-core": "^6.14.0",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.14.0",
+    "babel-preset-stage-1": "^6.13.0",
+    "babel-register": "^6.14.0",
+    "cross-env": "^2.0.1",
+    "eslint": "^3.4.0",
+    "eslint-config-airbnb": "^10.0.1",
+    "eslint-plugin-babel": "^3.3.0",
+    "eslint-plugin-import": "^1.14.0",
+    "eslint-plugin-jsx-a11y": "^2.2.1",
+    "eslint-plugin-react": "^6.2.0",
+    "expect": "^1.20.2",
+    "mocha": "^3.0.2",
+    "rimraf": "^2.5.4",
+    "webpack": "^1.13.2",
+    "wpapi": "^0.9.1"
+  }
+}
