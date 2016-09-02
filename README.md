@@ -45,16 +45,22 @@ export class HomePage extends React.Component {
   }
 
   render() {
-    const { status, data } = this.props.request;
+    const { status, data: posts } = this.props.request;
 
-    if (!data) {
+    if (!posts) {
       switch (status) === ResponseStatus.WAITING) {
         return (<div>Loading…</div>)
       }
-      if (status === ResponseStatus.WAITING) {
-        return (<div>Loading…</div>)
+      if (status === ResponseStatus.ERROR) {
+        return (<div>An error has occurred</div>)
       }
     }
+
+    return (
+      <div>
+        {!posts.length ? <NoPostFound />: <PostList posts={posts} />}
+      </div>
+    );
   }
 }
 
