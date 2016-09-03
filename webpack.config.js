@@ -9,7 +9,7 @@ var config = {
     ],
   },
   output: {
-    library: 'ReduxWP',
+    library: 'ReduxWPAPI',
     libraryTarget: 'umd',
   },
   plugins: [

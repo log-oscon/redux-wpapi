@@ -37,7 +37,7 @@ const initialReducerState = Immutable.fromJS({
   entitiesIndexes: {},
 });
 
-export default class ReduxWP {
+export default class ReduxWPAPI {
   static displayName = '[REDUX-WP-API]';
 
   static defaultSettings = {
@@ -160,14 +160,14 @@ export default class ReduxWP {
   indexers = {}
 
   constructor(settings) {
-    this.settings = defaultsDeep({}, settings, ReduxWP.defaultSettings);
+    this.settings = defaultsDeep({}, settings, ReduxWPAPI.defaultSettings);
 
     if (!this.settings.api) {
-      throw new Error(`${ReduxWP.displayName}: 'api client must be provided`);
+      throw new Error(`${ReduxWPAPI.displayName}: 'api client must be provided`);
     }
 
     this.settings.customCacheIndexes = {
-      ...ReduxWP.defaultSettings, // reinforces demandatory indexes besides id
+      ...ReduxWPAPI.defaultSettings, // reinforces demandatory indexes besides id
       ...this.settings.customCacheIndexes,
     };
   }
