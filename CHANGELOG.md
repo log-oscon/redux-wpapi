@@ -11,18 +11,18 @@ Some guidelines in reading this document:
 
 ## [new release]
 
-* Draft on Contributions and the introduction of this `CHANGELOG.md` file (#4)
-* Fix FAILURE handling (#3)
+* Draft on Contributions and the introduction of this `CHANGELOG.md` file ([#5](https://github.com/log-oscon/redux-wpapi/pull/5))
+* Fix FAILURE handling ([#3](https://github.com/log-oscon/redux-wpapi/pull/3))
 
 ## 0.1.2
 
-* Fix module identification name in code (#2)
-* Correct README.md (#1)
-* Fix documentation render function (8bbb83b)
+* Fix module identification name in code ([#2](https://github.com/log-oscon/redux-wpapi/pull/2))
+* Correct README.md ([#1](https://github.com/log-oscon/redux-wpapi/pull/1))
+* Fix documentation render function ([b0bb5f4](https://github.com/log-oscon/redux-wpapi/commit/b0bb5f417d6943c981346cf74b912efa67a7c9b6))
 
 ## 0.1.1
 
-* Include current page in the merge of selectQuery (ca2c03c)
+* Include current page in the merge of selectQuery ([ca2c03c](https://github.com/log-oscon/redux-wpapi/commit/ca2c03cd4e337a58ef61e9e154223ff95acbd0de))
 
 ## 0.1.0
 
