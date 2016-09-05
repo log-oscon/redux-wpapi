@@ -11,6 +11,7 @@ Some guidelines in reading this document:
 
 ## [new release]
 
+* Draft on Contributions and the introduction of this `CHANGELOG.md` file (#4)
 * Fix FAILURE handling (#3)
 
 ## 0.1.2
