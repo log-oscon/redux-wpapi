@@ -354,7 +354,7 @@ export default class ReduxWPAPI {
       }
       case REDUX_WP_API_FAILURE: {
         const { error } = action;
-        const { request, uid } = action.payload;
+        const { page, uid } = action.payload;
         const requestState = {
           status: ERROR,
           error: {
@@ -364,7 +364,6 @@ export default class ReduxWPAPI {
         };
 
         if (action.meta.operation === 'get') {
-          const page = parseInt(this.settings.getRequestedPage(request, this.settings) || 1, 10);
           return state.mergeIn(['requestsByQuery', uid, page], requestState);
         }
 
