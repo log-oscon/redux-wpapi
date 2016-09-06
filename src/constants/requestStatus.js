@@ -1,3 +1,9 @@
-export const WAITING = 'WAITING';
-export const READY = 'READY';
-export const ERROR = 'ERROR';
+export const pending = 'pending';
+export const resolved = 'resolved';
+export const rejected = 'rejected';
+
+export default {
+  pending,
+  resolved,
+  rejected,
+};

@@ -24,9 +24,9 @@ import {
 } from './constants/actions';
 
 import {
-  WAITING,
-  READY,
-  ERROR,
+  pending,
+  resolved,
+  rejected,
 } from './constants/requestStatus';
 
 const initialReducerState = Immutable.fromJS({
@@ -61,7 +61,7 @@ export default class ReduxWPAPI {
       };
     },
 
-    // FIXME provisional method while waiting WP-API/node-wpapi#213
+    // FIXME provisional method while pending WP-API/node-wpapi#213
     getIndexes(request) {
       /* eslint-disable no-param-reassign */
       // Internal mutations inside reduce function
@@ -194,7 +194,7 @@ export default class ReduxWPAPI {
     if (meta.operation === 'get') {
       let cache;
       let lastCacheUpdate;
-      let cachePath;
+      let data;
       const state = store.getState().wp;
       const indexes = this.settings.getIndexes(request, this.settings);
       const localID = this.getEntityLocalID(state, meta.aggregator, indexes);
@@ -202,15 +202,15 @@ export default class ReduxWPAPI {
       payload.page = parseInt(this.settings.getRequestedPage(request, this.settings) || 1, 10);
 
       if (localID) {
-        cachePath = localID;
-        cache = state.getIn(['entities', cachePath]);
+        cache = state.getIn(['entities', localID]);
+        data = [localID];
       }
 
       if (cache) {
         lastCacheUpdate = cache.lastCacheUpdate;
       } else {
-        cachePath = ['requestsByQuery', payload.uid];
-        cache = state.getIn([...cachePath, payload.page]);
+        cache = state.getIn(['requestsByQuery', payload.uid, payload.page]);
+        data = cache.get('data');
       }
 
       if (cache && (localID || (isUndefined(localID) && !cache.get('error')))) {
@@ -222,7 +222,7 @@ export default class ReduxWPAPI {
             uid: payload.uid,
             page: payload.page,
             lastCacheUpdate,
-            cachePath,
+            data,
           },
         });
 
@@ -263,33 +263,35 @@ export default class ReduxWPAPI {
   reducer = (state = initialReducerState, action) => {
     switch (action.type) {
       case REDUX_WP_API_CACHE_HIT: {
-        const { cachePath, page, uid } = action.payload;
+        const { data, page, uid } = action.payload;
+        let newState = state.mergeIn(
+          ['requestsByName', action.meta.name],
+          { page, uid }
+        );
 
-        const newState = state.mergeIn(['requestsByName', action.meta.name], { page, uid });
-        if (newState.getIn(['requestsByQuery', uid, page])) {
-          return newState;
-        }
-
-        return (
-          newState.mergeIn(
-            ['requestsByQuery', uid, 1],
-            {
-              status: READY,
+        if (!newState.getIn(['requestsByQuery', uid, page])) {
+          newState = (
+            newState
+            .mergeIn(['requestsByQuery', uid, page], {
+              status: resolved,
               operation: action.meta.operation,
               error: false,
               requestAt: action.payload.lastCacheUpdate,
               responseAt: action.payload.lastCacheUpdate,
-              data: [cachePath],
-            }
-          )
-        );
+            })
+            .setIn(['requestsByQuery', uid, 1, 'data'], data)
+          );
+        }
+
+
+        return newState;
       }
 
       case REDUX_WP_API_REQUEST: {
         const { name, operation, requestAt } = action.meta;
 
         const requestState = {
-          status: WAITING,
+          status: pending,
           requestAt,
           operation,
         };
@@ -321,7 +323,7 @@ export default class ReduxWPAPI {
 
         const requestState = {
           responseAt,
-          status: READY,
+          status: resolved,
           error: false,
         };
 
@@ -356,7 +358,7 @@ export default class ReduxWPAPI {
         const { error } = action;
         const { page, uid } = action.payload;
         const requestState = {
-          status: ERROR,
+          status: rejected,
           error: {
             message: error.message,
             status: error.status,

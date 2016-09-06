@@ -3,192 +3,29 @@ import { describe, it } from 'mocha';
 import expect from 'expect';
 import WPAPI from 'wpapi';
 import Immutable from 'immutable';
-
-import { REDUX_WP_API_SUCCESS, REDUX_WP_API_REQUEST } from '../src/constants/actions';
 import ReduxWPAPI from '../src/index.js';
-import { WAITING, READY } from '../src/constants/requestStatus';
+import RequestStatus from '../src/constants/requestStatus';
 
-const requestGET = {
-  type: REDUX_WP_API_REQUEST,
-  payload: {
-    uid: '/namespace/any',
-    page: 1,
-  },
-  meta: {
-    name: 'test',
-    aggregator: 'any',
-    requestAt: Date.now(),
-    operation: 'get',
-  },
-};
-
-const requestMOD = {
-  type: REDUX_WP_API_REQUEST,
-  payload: { /* irrelant */ },
-  meta: {
-    name: 'test',
-    requestAt: Date.now(),
-    // type must be injected;
-    aggregator: 'any',
-    params: { /* irrelant to this point */ },
-  },
-};
-
-const collectionResponse1 = [
-  {
-    id: 2,
-    dumbAttr: 'dumb1',
-    _links: {
-      self: [{ href: 'http://dumb.url/wp-json/namespace/any/2' }],
-      collection: [{ href: 'http://dumb.url/wp-json/namespace/any' }],
-      parent: [{
-        embeddable: true,
-        href: 'http://dumb.url/wp-json/namespace/any/1',
-      }],
-      author: [{
-        embeddable: true,
-        href: 'http://dumb.url/wp-json/wp/v2/users/1',
-      }],
-    },
-    _embedded: {
-      author: [{
-        id: 1,
-        name: 'admin',
-        link: 'http://km.nos.dev/author/admin/',
-        slug: 'admin',
-        _links: {
-          self: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users/1' }],
-          collection: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users' }],
-        },
-      }],
-      parent: [{
-        id: 1,
-        dumbAttr: 'dumb2',
-        _links: {
-          self: [{ href: 'http://dumb.url/wp-json/namespace/any/1' }],
-          collection: [{ href: 'http://dumb.url/wp-json/namespace/any' }],
-          parent: [{
-            embeddable: true,
-            href: 'http://dumb.url/wp-json/namespace/any/1',
-          }],
-          author: [{
-            embeddable: true,
-            href: 'http://dumb.url/wp-json/wp/v2/users/2',
-          }],
-        },
-      }],
-    },
-  },
-  {
-    id: 1,
-    dumbAttr: 'dumb2',
-    _links: {
-      self: [{ href: 'http://dumb.url/wp-json/namespace/any/1' }],
-      collection: [{ href: 'http://dumb.url/wp-json/namespace/any' }],
-      parent: [{
-        embeddable: true,
-        href: 'http://dumb.url/wp-json/namespace/any/1',
-      }],
-      author: [{
-        embeddable: true,
-        href: 'http://dumb.url/wp-json/wp/v2/users/2',
-      }],
-    },
-    _embedded: {
-      author: [{
-        id: 2,
-        name: 'edygar',
-        link: 'http://km.nos.dev/author/edygar/',
-        slug: 'edygar',
-        _links: {
-          self: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users/2' }],
-          collection: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users' }],
-        },
-      }],
-    },
-  },
-];
-
-collectionResponse1._paging = {
-  total: 2,
-  totalPages: 1,
-};
-
-const collectionResponse2 = [
-  {
-    id: 1,
-    dumbAttr: 'dumb2 - modified',
-    _links: {
-      self: [{ href: 'http://dumb.url/wp-json/namespace/any/1' }],
-      collection: [{ href: 'http://dumb.url/wp-json/namespace/any' }],
-      parent: [{
-        embeddable: true,
-        href: 'http://dumb.url/wp-json/namespace/any/1',
-      }],
-      author: [{
-        embeddable: true,
-        href: 'http://dumb.url/wp-json/wp/v2/users/2',
-      }],
-    },
-    _embedded: {
-      author: [{
-        id: 2,
-        name: 'edygar',
-        link: 'http://km.nos.dev/author/edygar/',
-        slug: 'edygar',
-        _links: {
-          self: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users/2' }],
-          collection: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users' }],
-        },
-      }],
-    },
-  },
-];
-
-collectionResponse2._paging = {
-  total: 1,
-  totalPages: 2,
-};
-
-
-const successfulGET = {
-  type: REDUX_WP_API_SUCCESS,
-  payload: {
-    uid: '/namespace/any',
-    page: 1,
-    response: collectionResponse1,
-  },
-  meta: {
-    name: 'test',
-    aggregator: 'any',
-    requestAt: Date.now(),
-    responseAt: Date.now(),
-    operation: 'get',
-  },
-};
-
-const successfulGET2 = {
-  type: REDUX_WP_API_SUCCESS,
-  payload: {
-    uid: '/namespace/any?posts_per_page=1',
-    page: 1,
-    response: collectionResponse2,
-  },
-  meta: {
-    name: 'test',
-    aggregator: 'any',
-    requestAt: Date.now(),
-    responseAt: Date.now(),
-    operation: 'get',
-  },
-};
+import collectionRequest from './mocked-actions/collectionRequest';
+import modifyingRequest from './mocked-actions/modifyingRequest';
+import successfulCollectionRequest from './mocked-actions/successfulCollectionRequest';
+import successfullQueryBySlug from './mocked-actions/successfullQueryBySlug';
+import unsuccessfulCollectionRequest from './mocked-actions/unsuccessfulCollectionRequest';
+import unsuccessfulModifyingRequest from './mocked-actions/unsuccessfulModifyingRequest';
+import cacheHitSingle from './mocked-actions/cacheHitSingle';
+import cacheHitCollection from './mocked-actions/cacheHitCollection';
 
 describe('Reducer', () => {
-  const { reducer } = new ReduxWPAPI({
-    api: new WPAPI({ endpoint: 'http://dumb.url/wp-json/' }),
-    customCacheIndexes: {
-      any: 'dumbAttr',
-    },
+  const modifingOperations = ['create', 'update', 'delete'];
+  let reducer;
+
+  beforeEach(() => {
+    reducer = new ReduxWPAPI({
+      api: new WPAPI({ endpoint: 'http://dumb.url/wp-json/' }),
+      customCacheIndexes: {
+        any: 'slug',
+      },
+    }).reducer;
   });
 
   it('should have the right Immutable instances for its initial state', () => {
@@ -209,58 +46,58 @@ describe('Reducer', () => {
   describe('`REDUX_WP_API_REQUEST` action', () => {
     describe('operation GET', () => {
       it('should keep request related data by query\'s uid', () => {
-        const state = reducer(undefined, requestGET);
-        const queryState = state.getIn(['requestsByQuery', requestGET.payload.uid]);
+        const state = reducer(undefined, collectionRequest);
+        const queryState = state.getIn(['requestsByQuery', collectionRequest.payload.uid]);
         expect(queryState).toBeAn(Immutable.Map);
         expect(queryState.get('pagination')).toNotBeAn(Immutable.Map);
-        expect(queryState.get(requestGET.payload.page)).toBeAn(Immutable.Map);
-        expect(queryState.get(requestGET.payload.page).toJSON())
+        expect(queryState.get(collectionRequest.payload.page)).toBeAn(Immutable.Map);
+        expect(queryState.get(collectionRequest.payload.page).toJSON())
         .toEqual({
-          status: WAITING,
-          operation: requestGET.meta.operation,
-          requestAt: requestGET.meta.requestAt,
+          status: RequestStatus.pending,
+          operation: collectionRequest.meta.operation,
+          requestAt: collectionRequest.meta.requestAt,
         });
 
-        expect(queryState.getIn([requestGET.payload.page, 'data']))
+        expect(queryState.getIn([collectionRequest.payload.page, 'data']))
         .toBe(undefined, 'shouldnt touch data');
       });
 
       it('should keep by request name the enought data to reach query', () => {
-        const state = reducer(undefined, requestGET);
-        const nameState = state.getIn(['requestsByName', requestGET.meta.name]);
+        const state = reducer(undefined, collectionRequest);
+        const nameState = state.getIn(['requestsByName', collectionRequest.meta.name]);
 
-        expect(nameState.get('page')).toBe(requestGET.payload.page);
-        expect(nameState.get('uid')).toBe(requestGET.payload.uid);
+        expect(nameState.get('page')).toBe(collectionRequest.payload.page);
+        expect(nameState.get('uid')).toBe(collectionRequest.payload.uid);
       });
 
       it('should keep previous data under query', () => {
-        const firstState = reducer(undefined, requestGET);
-        const secondState = reducer(firstState, successfulGET);
+        const firstState = reducer(undefined, collectionRequest);
+        const secondState = reducer(firstState, successfulCollectionRequest);
         const thirdState = reducer(secondState, {
-          ...requestGET,
+          ...collectionRequest,
           meta: {
-            ...requestGET.meta,
+            ...collectionRequest.meta,
             // request renewed
             requestAt: Date.now(),
           },
         });
 
-        expect(thirdState.getIn(['requestsByQuery', requestGET.payload.uid, 'data']))
-        .toBe(secondState.getIn(['requestsByQuery', requestGET.payload.uid, 'data']));
+        expect(thirdState.getIn(['requestsByQuery', collectionRequest.payload.uid, 'data']))
+        .toBe(secondState.getIn(['requestsByQuery', collectionRequest.payload.uid, 'data']));
       });
     });
 
-    ['create', 'update', 'delete']
+    modifingOperations
     .forEach(type =>
-      describe(`operation ${type.toUpperCase()}`, () => {
-        const request = { ...requestMOD, meta: { ...requestMOD.meta, type } };
+      describe(`on operation ${type.toUpperCase()}`, () => {
+        const request = { ...modifyingRequest, meta: { ...modifyingRequest.meta, type } };
         it('should keep request related data by request name', () => {
           const state = reducer(undefined, request);
           const nameState = state.getIn(['requestsByName', request.meta.name]);
           expect(nameState).toBeAn(Immutable.Map);
           expect(nameState.toJSON())
           .toEqual({
-            status: WAITING,
+            status: RequestStatus.pending,
             operation: request.meta.operation,
             requestAt: request.meta.requestAt,
             data: false,
@@ -272,8 +109,8 @@ describe('Reducer', () => {
 
   describe('`REDUX_WP_API_SUCCESS` action', () => {
     it('should keep request related data by query\'s uid for GET operations', () => {
-      const state = reducer(undefined, successfulGET);
-      const queryState = state.getIn(['requestsByQuery', successfulGET.payload.uid]);
+      const state = reducer(undefined, successfulCollectionRequest);
+      const queryState = state.getIn(['requestsByQuery', successfulCollectionRequest.payload.uid]);
 
       expect(queryState).toBeAn(Immutable.Map);
       expect(queryState.get('pagination'))
@@ -282,14 +119,14 @@ describe('Reducer', () => {
         total: 2,
         totalPages: 1,
       });
-      expect(queryState.get(successfulGET.payload.page)).toBeAn(Immutable.Map);
+      expect(queryState.get(successfulCollectionRequest.payload.page)).toBeAn(Immutable.Map);
 
-      const data = queryState.getIn([successfulGET.payload.page, 'data']);
-      expect(queryState.get(successfulGET.payload.page).toJSON())
+      const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
+      expect(queryState.get(successfulCollectionRequest.payload.page).toJSON())
       .toInclude({
-        status: READY,
+        status: RequestStatus.resolved,
         error: false,
-        responseAt: successfulGET.meta.responseAt,
+        responseAt: successfulCollectionRequest.meta.responseAt,
       });
 
       expect(data).toBeAn(Array);
@@ -297,39 +134,106 @@ describe('Reducer', () => {
     });
 
     it('should keep local ids instead objects in data, by query\'s uid', () => {
-      const state = reducer(undefined, successfulGET);
-      const queryState = state.getIn(['requestsByQuery', successfulGET.payload.uid]);
-      const data = queryState.getIn([successfulGET.payload.page, 'data']);
+      const state = reducer(undefined, successfulCollectionRequest);
+      const queryState = state.getIn(['requestsByQuery', successfulCollectionRequest.payload.uid]);
+      const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
 
       expect(data).toBeAn(Array);
       expect(data.length).toBe(2);
       expect(state.getIn(['entities', data[0]]).link)
-      .toBe(successfulGET.payload.response[0].link);
+      .toBe(successfulCollectionRequest.payload.response[0].link);
 
       expect(state.getIn(['entities', data[1]]).link)
-      .toBe(successfulGET.payload.response[1].link);
+      .toBe(successfulCollectionRequest.payload.response[1].link);
     });
 
     it('should persist locally each found entity exactly once', () => {
-      const state = reducer(undefined, successfulGET);
+      const state = reducer(undefined, successfulCollectionRequest);
       const entities = state.get('entities');
       expect(entities.size).toBe(4);
       expect(entities.toJSON().map(item => item.link))
-      .toInclude(successfulGET.payload.response[0]._embedded.author[0].link)
-      .toInclude(successfulGET.payload.response[1].link)
-      .toInclude(successfulGET.payload.response[1]._embedded.author[0].link)
-      .toInclude(successfulGET.payload.response[0].link);
+      .toInclude(successfulCollectionRequest.payload.response[0]._embedded.author[0].link)
+      .toInclude(successfulCollectionRequest.payload.response[1].link)
+      .toInclude(successfulCollectionRequest.payload.response[1]._embedded.author[0].link)
+      .toInclude(successfulCollectionRequest.payload.response[0].link);
     });
 
     it('should update previous entity\'s state', () => {
-      const previous = reducer(undefined, successfulGET);
-      const state = reducer(previous, successfulGET2);
-      const queryState = state.getIn(['requestsByQuery', successfulGET2.payload.uid]);
+      const previous = reducer(undefined, successfulCollectionRequest);
+      const state = reducer(previous, successfullQueryBySlug);
+      const queryState = state.getIn(['requestsByQuery', successfullQueryBySlug.payload.uid]);
       const [id] = queryState.getIn([1, 'data']);
       const entity = state.getIn(['entities', id]);
       expect(entity).toContain({
-        link: successfulGET2.payload.response[0].link,
+        link: successfullQueryBySlug.payload.response[0].link,
       });
+    });
+  });
+
+  describe('`REDUX_WP_API_FAILURE` action', () => {
+    describe('on get operation', () => {
+      it('should update state on query\'s uid status for GET operations', () => {
+        const state = reducer(undefined, unsuccessfulCollectionRequest);
+        expect(
+          state.getIn(['requestsByQuery', unsuccessfulCollectionRequest.payload.uid, 1, 'status'])
+        ).toBe(RequestStatus.rejected);
+      });
+    });
+
+    modifingOperations.forEach(type =>
+      describe(`on ${type} operation`, () => {
+        const response = {
+          ...unsuccessfulModifyingRequest,
+          meta: {
+            ...unsuccessfulModifyingRequest.meta,
+            operation: type,
+          },
+        };
+
+        it('should update status on request by name', () => {
+          const state = reducer(undefined, response);
+          expect(
+            state.getIn(['requestsByName', response.meta.name, 'status'])
+          ).toBe(RequestStatus.rejected);
+        });
+      })
+    );
+  });
+
+  describe('`REDUX_WP_API_CACHE_HIT` action', () => {
+    it('should update state under request name', () => {
+      let previousState = reducer(undefined, collectionRequest);
+      previousState = reducer(previousState, successfulCollectionRequest);
+      const state = reducer(previousState, cacheHitSingle);
+      expect(state.getIn(['requestsByName', cacheHitSingle.meta.name]).toJSON())
+      .toInclude({
+        uid: cacheHitSingle.payload.uid,
+        page: cacheHitSingle.payload.page,
+      });
+    });
+
+    it('should keep same query state', () => {
+      let previousState = reducer(undefined, collectionRequest);
+      previousState = reducer(previousState, successfulCollectionRequest);
+      const state = reducer(previousState, cacheHitCollection);
+      const { page, uid } = cacheHitCollection.payload;
+
+      expect(state.getIn(['requestsByQuery', uid, page]))
+      .toBe(previousState.getIn(['requestsByQuery', uid, page]));
+    });
+
+    it('should always have data as a Array under query\'s uid', () => {
+      let state = reducer(undefined, collectionRequest);
+      state = reducer(state, successfulCollectionRequest);
+      state = reducer(state, cacheHitSingle);
+      const { page, uid } = cacheHitSingle.payload;
+      expect(state.getIn(['requestsByQuery', uid, page, 'data'])).toBeAn('array');
+
+      state = reducer(state, cacheHitCollection);
+      const { page: collectionPage, uid: collectionUID } = cacheHitCollection.payload;
+
+      expect(state.getIn(['requestsByQuery', collectionUID, collectionPage, 'data']))
+      .toBeAn('array');
     });
   });
 });
