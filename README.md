@@ -83,4 +83,4 @@ We are preparing some helper [documents](https://github.com/log-oscon/redux-wpap
 Every Pull Request must have the following:
 
 * Unit tests for any functionality that's exposed to the end user.
-* An entry in the (CHANGELOG.md)[https://github.com/log-oscon/redux-wpapi/master/CHANGELOG.md] file.
+* An entry in the [CHANGELOG.md](https://github.com/log-oscon/redux-wpapi/master/CHANGELOG.md) file.
