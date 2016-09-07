@@ -1,9 +1,9 @@
-export const pending = 'pending';
-export const resolved = 'resolved';
-export const rejected = 'rejected';
+export const WAITING = 'WAITING';
+export const READY = 'READY';
+export const ERROR = 'ERROR';
 
 export default {
-  pending,
-  resolved,
-  rejected,
+  WAITING,
+  READY,
+  ERROR,
 };

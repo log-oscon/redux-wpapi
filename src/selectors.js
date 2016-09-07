@@ -1,5 +1,6 @@
+import { describe, it } from 'mocha';
 import { createSelector } from 'reselect';
-import { pending } from './constants/requestStatus';
+import { WAITING } from './constants/requestStatus';
 import { mapDeep } from './helpers';
 
 export const denormalize = (entities, id, memoized = {}) => {
@@ -42,7 +43,7 @@ export const selectQuery = name => createSelector(
   (request, entities) => {
     if (!request) {
       return {
-        status: pending,
+        status: WAITING,
         error: false,
         data: false,
       };

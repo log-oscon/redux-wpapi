@@ -24,9 +24,9 @@ import {
 } from './constants/actions';
 
 import {
-  pending,
-  resolved,
-  rejected,
+  WAITING,
+  READY,
+  ERROR,
 } from './constants/requestStatus';
 
 const initialReducerState = Immutable.fromJS({
@@ -61,7 +61,7 @@ export default class ReduxWPAPI {
       };
     },
 
-    // FIXME provisional method while pending WP-API/node-wpapi#213
+    // FIXME provisional method while WAITING WP-API/node-wpapi#213
     getIndexes(request) {
       /* eslint-disable no-param-reassign */
       // Internal mutations inside reduce function
@@ -273,7 +273,7 @@ export default class ReduxWPAPI {
           newState = (
             newState
             .mergeIn(['requestsByQuery', uid, page], {
-              status: resolved,
+              status: READY,
               operation: action.meta.operation,
               error: false,
               requestAt: action.payload.lastCacheUpdate,
@@ -291,7 +291,7 @@ export default class ReduxWPAPI {
         const { name, operation, requestAt } = action.meta;
 
         const requestState = {
-          status: pending,
+          status: WAITING,
           requestAt,
           operation,
         };
@@ -323,7 +323,7 @@ export default class ReduxWPAPI {
 
         const requestState = {
           responseAt,
-          status: resolved,
+          status: READY,
           error: false,
         };
 
@@ -358,7 +358,7 @@ export default class ReduxWPAPI {
         const { error } = action;
         const { page, uid } = action.payload;
         const requestState = {
-          status: rejected,
+          status: ERROR,
           error: {
             message: error.message,
             status: error.status,

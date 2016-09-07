@@ -53,7 +53,7 @@ describe('Reducer', () => {
         expect(queryState.get(collectionRequest.payload.page)).toBeAn(Immutable.Map);
         expect(queryState.get(collectionRequest.payload.page).toJSON())
         .toEqual({
-          status: RequestStatus.pending,
+          status: RequestStatus.WAITING,
           operation: collectionRequest.meta.operation,
           requestAt: collectionRequest.meta.requestAt,
         });
@@ -97,7 +97,7 @@ describe('Reducer', () => {
           expect(nameState).toBeAn(Immutable.Map);
           expect(nameState.toJSON())
           .toEqual({
-            status: RequestStatus.pending,
+            status: RequestStatus.WAITING,
             operation: request.meta.operation,
             requestAt: request.meta.requestAt,
             data: false,
@@ -124,7 +124,7 @@ describe('Reducer', () => {
       const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
       expect(queryState.get(successfulCollectionRequest.payload.page).toJSON())
       .toInclude({
-        status: RequestStatus.resolved,
+        status: RequestStatus.READY,
         error: false,
         responseAt: successfulCollectionRequest.meta.responseAt,
       });
@@ -176,7 +176,7 @@ describe('Reducer', () => {
         const state = reducer(undefined, unsuccessfulCollectionRequest);
         expect(
           state.getIn(['requestsByQuery', unsuccessfulCollectionRequest.payload.uid, 1, 'status'])
-        ).toBe(RequestStatus.rejected);
+        ).toBe(RequestStatus.ERROR);
       });
     });
 
@@ -194,7 +194,7 @@ describe('Reducer', () => {
           const state = reducer(undefined, response);
           expect(
             state.getIn(['requestsByName', response.meta.name, 'status'])
-          ).toBe(RequestStatus.rejected);
+          ).toBe(RequestStatus.ERROR);
         });
       })
     );
