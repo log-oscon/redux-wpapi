@@ -11,6 +11,7 @@ Some guidelines in reading this document:
 
 ## [new release]
 
+* Implements reducer tests ([#6](https://github.com/log-oscon/redux-wpapi/pull/6))
 * Draft on Contributions and the introduction of this `CHANGELOG.md` file ([#5](https://github.com/log-oscon/redux-wpapi/pull/5))
 * Fix FAILURE handling ([#3](https://github.com/log-oscon/redux-wpapi/pull/3))
 

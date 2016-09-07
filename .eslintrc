@@ -37,6 +37,7 @@
   "extends": [ "airbnb" ],
 
   "rules": {
+    "no-underscore-dangle": 0,
     "no-unused-vars": [2, { "vars": "all", "args": "after-used" }],
     "quotes": [2, "single"],
     "strict": [2, "never"],
