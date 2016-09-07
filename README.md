@@ -69,3 +69,21 @@ export default connect({
   request: selectQuery('HomePagePosts'),
 }, { wp })(HomePage);
 ```
+
+## Contributions
+
+All contributions are welcome, and very much appreciated.
+
+We are preparing some helper [documents](https://github.com/log-oscon/redux-wpapi/issues/4) to facilitate the process (hopefully), but for now we're following the these guidelines:
+
+* Be reasonable
+* Give as much detailed information as you can
+* Keep it as short as possible
+* Let the code talk
+
+### Must have's
+
+Every Pull Request must have the following:
+
+* Unit tests for any functionality that's exposed to the end user.
+* An entry in the [CHANGELOG.md](https://github.com/log-oscon/redux-wpapi/master/CHANGELOG.md) file.
