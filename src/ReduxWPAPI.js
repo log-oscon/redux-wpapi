@@ -11,7 +11,7 @@ import capitalize from 'lodash/capitalize';
 import Immutable from 'immutable';
 import isArray from 'lodash/isArray';
 import isUndefined from 'lodash/isUndefined';
-import namedGroupRegex from './named-group-regexp';
+import namedGroupRegex from './namedGroupRegexp';
 import { selectQuery } from './selectors';
 
 import {

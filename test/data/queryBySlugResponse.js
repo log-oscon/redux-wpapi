@@ -1,4 +1,4 @@
-const collectionResponse2 = [
+const queryBySlugResponse = [
   {
     id: 1,
     slug: 'dumb1-modified',
@@ -30,10 +30,10 @@ const collectionResponse2 = [
   },
 ];
 
-collectionResponse2._paging = {
+queryBySlugResponse._paging = {
   total: 1,
   totalPages: 2,
 };
 
-export default collectionResponse2;
+export default queryBySlugResponse;
 

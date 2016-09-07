@@ -1,5 +1,5 @@
 import { REDUX_WP_API_SUCCESS } from '../../src/constants/actions';
-import collectionResponse from '../data/collection-response';
+import collectionResponse from '../data/collectionResponse';
 
 export default {
   type: REDUX_WP_API_SUCCESS,

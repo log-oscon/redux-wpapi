@@ -1,12 +1,12 @@
 import { REDUX_WP_API_SUCCESS } from '../../src/constants/actions';
-import collectionResponse from '../data/query-by-slug-response';
+import queryBySlugResponse from '../data/queryBySlugResponse';
 
 export default {
   type: REDUX_WP_API_SUCCESS,
   payload: {
     uid: '/namespace/any?slug=dumb2',
     page: 1,
-    response: collectionResponse,
+    response: queryBySlugResponse,
   },
   meta: {
     name: 'test',

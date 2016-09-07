@@ -1,4 +1,4 @@
-const collectionResponse1 = [
+const collectionResponse = [
   {
     id: 2,
     slug: 'dumb2',
@@ -76,9 +76,9 @@ const collectionResponse1 = [
   },
 ];
 
-collectionResponse1._paging = {
+collectionResponse._paging = {
   total: 2,
   totalPages: 1,
 };
 
-export default collectionResponse1;
+export default collectionResponse;
