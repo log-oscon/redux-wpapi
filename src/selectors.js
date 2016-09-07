@@ -1,4 +1,3 @@
-import { describe, it } from 'mocha';
 import { createSelector } from 'reselect';
 import { WAITING } from './constants/requestStatus';
 import { mapDeep } from './helpers';

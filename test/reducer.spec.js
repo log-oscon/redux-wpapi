@@ -1,10 +1,9 @@
-/* eslint-disable import/no-extraneous-dependencies, no-underscore-dangle  */
 import { describe, it } from 'mocha';
 import expect from 'expect';
 import WPAPI from 'wpapi';
 import Immutable from 'immutable';
 import ReduxWPAPI from '../src/index.js';
-import RequestStatus from '../src/constants/requestStatus';
+import { WAITING, READY, ERROR } from '../src/constants/requestStatus';
 
 import collectionRequest from './mocked-actions/collectionRequest';
 import modifyingRequest from './mocked-actions/modifyingRequest';
@@ -53,7 +52,7 @@ describe('Reducer', () => {
         expect(queryState.get(collectionRequest.payload.page)).toBeAn(Immutable.Map);
         expect(queryState.get(collectionRequest.payload.page).toJSON())
         .toEqual({
-          status: RequestStatus.WAITING,
+          status: WAITING,
           operation: collectionRequest.meta.operation,
           requestAt: collectionRequest.meta.requestAt,
         });
@@ -97,7 +96,7 @@ describe('Reducer', () => {
           expect(nameState).toBeAn(Immutable.Map);
           expect(nameState.toJSON())
           .toEqual({
-            status: RequestStatus.WAITING,
+            status: WAITING,
             operation: request.meta.operation,
             requestAt: request.meta.requestAt,
             data: false,
@@ -124,7 +123,7 @@ describe('Reducer', () => {
       const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
       expect(queryState.get(successfulCollectionRequest.payload.page).toJSON())
       .toInclude({
-        status: RequestStatus.READY,
+        status: READY,
         error: false,
         responseAt: successfulCollectionRequest.meta.responseAt,
       });
@@ -176,7 +175,7 @@ describe('Reducer', () => {
         const state = reducer(undefined, unsuccessfulCollectionRequest);
         expect(
           state.getIn(['requestsByQuery', unsuccessfulCollectionRequest.payload.uid, 1, 'status'])
-        ).toBe(RequestStatus.ERROR);
+        ).toBe(ERROR);
       });
     });
 
@@ -194,7 +193,7 @@ describe('Reducer', () => {
           const state = reducer(undefined, response);
           expect(
             state.getIn(['requestsByName', response.meta.name, 'status'])
-          ).toBe(RequestStatus.ERROR);
+          ).toBe(ERROR);
         });
       })
     );
