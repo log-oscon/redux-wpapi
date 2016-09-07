@@ -22,11 +22,19 @@
     "build": "npm run build:commonjs && npm run build:es && npm run build:umd && npm run build:umd:min",
     "prepublish": "npm run clean && npm run check:src && npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/log-oscon/redux-wpapi.git"
+  },
   "author": "log.OSCON <engenharia@log.pt> (http://www.log.pt/)",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/log-oscon/redux-wpapi/issues"
+  },
   "dependencies": {
     "immutable": "^3.8.1",
     "lodash": "^4.15.0",
+    "loose-envify": "^1.2.0",
     "qs": "^6.2.1",
     "reselect": "^2.5.3"
   },
@@ -50,5 +58,19 @@
     "rimraf": "^2.5.4",
     "webpack": "^1.13.2",
     "wpapi": "^0.9.1"
+  },
+  "npmName": "redux-wpapi",
+  "npmFileMap": [
+    {
+      "basePath": "/dist/",
+      "files": [
+        "*.js"
+      ]
+    }
+  ],
+  "browserify": {
+    "transform": [
+      "loose-envify"
+    ]
   }
 }
