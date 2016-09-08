@@ -3,7 +3,7 @@ import expect from 'expect';
 import WPAPI from 'wpapi';
 import Immutable from 'immutable';
 import ReduxWPAPI from '../src/index.js';
-import { WAITING, READY, ERROR } from '../src/constants/requestStatus';
+import { pending, resolved, rejected } from '../src/constants/requestStatus';
 
 import collectionRequest from './mocked-actions/collectionRequest';
 import modifyingRequest from './mocked-actions/modifyingRequest';
@@ -52,7 +52,7 @@ describe('Reducer', () => {
         expect(queryState.get(collectionRequest.payload.page)).toBeAn(Immutable.Map);
         expect(queryState.get(collectionRequest.payload.page).toJSON())
         .toEqual({
-          status: WAITING,
+          status: pending,
           operation: collectionRequest.meta.operation,
           requestAt: collectionRequest.meta.requestAt,
         });
@@ -96,7 +96,7 @@ describe('Reducer', () => {
           expect(nameState).toBeAn(Immutable.Map);
           expect(nameState.toJSON())
           .toEqual({
-            status: WAITING,
+            status: pending,
             operation: request.meta.operation,
             requestAt: request.meta.requestAt,
             data: false,
@@ -123,7 +123,7 @@ describe('Reducer', () => {
       const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
       expect(queryState.get(successfulCollectionRequest.payload.page).toJSON())
       .toInclude({
-        status: READY,
+        status: resolved,
         error: false,
         responseAt: successfulCollectionRequest.meta.responseAt,
       });
@@ -175,7 +175,7 @@ describe('Reducer', () => {
         const state = reducer(undefined, unsuccessfulCollectionRequest);
         expect(
           state.getIn(['requestsByQuery', unsuccessfulCollectionRequest.payload.uid, 1, 'status'])
-        ).toBe(ERROR);
+        ).toBe(rejected);
       });
     });
 
@@ -193,7 +193,7 @@ describe('Reducer', () => {
           const state = reducer(undefined, response);
           expect(
             state.getIn(['requestsByName', response.meta.name, 'status'])
-          ).toBe(ERROR);
+          ).toBe(rejected);
         });
       })
     );

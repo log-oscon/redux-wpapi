@@ -51,8 +51,8 @@ export class HomePage extends React.Component {
 
     if (!posts) {
       switch (status) {
-          case ResponseStatus.WAITING: return <div>Loading…</div>;
-          case ResponseStatus.ERROR: return <div>An error has occurred</div>;
+          case ResponseStatus.pending: return <div>Loading…</div>;
+          case ResponseStatus.rejected: return <div>An error has occurred</div>;
       }
     }
 

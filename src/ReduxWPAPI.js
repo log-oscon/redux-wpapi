@@ -24,9 +24,9 @@ import {
 } from './constants/actions';
 
 import {
-  WAITING,
-  READY,
-  ERROR,
+  pending,
+  resolved,
+  rejected,
 } from './constants/requestStatus';
 
 const initialReducerState = Immutable.fromJS({
@@ -43,118 +43,7 @@ export default class ReduxWPAPI {
   static defaultSettings = {
     beforeIndexing: nthArg(0),
     timeout: 30000,
-    ttl: 60000,
-    customCacheIndexes: {
-      taxonomies: ['slug'],
-    },
-
-    getRequestedPage(request) {
-      return request._params.page;
-    },
-
-
-    getPagination(response) {
-      const { total, totalPages } = response._paging || {};
-      return {
-        total: parseInt(total || 1, 10),
-        totalPages: parseInt(totalPages || 1, 10),
-      };
-    },
-
-    // FIXME provisional method while WAITING WP-API/node-wpapi#213
-    getIndexes(request) {
-      /* eslint-disable no-param-reassign */
-      // Internal mutations inside reduce function
-      let lastFragment = null;
-      let unresolvedNesting = 1;
-      const foundIndexers = reduce(request._path, (indexers, fragment, piece) => {
-        const id = find(request._levels[piece], cmp => cmp.validate(fragment));
-
-        if (!id) return indexers;
-        const name = id.component.match(namedGroupRegex);
-
-        if (name) {
-          lastFragment = indexers[name[1]] = fragment;
-          unresolvedNesting--;
-        } else {
-          unresolvedNesting++;
-        }
-
-        return indexers;
-      }, { ...request._params });
-
-      if (!foundIndexers.id && lastFragment && unresolvedNesting === 1) {
-        foundIndexers.id = lastFragment;
-      }
-
-      return foundIndexers;
-    },
-
-    getRequestUID(request, { api }) {
-      /* eslint-disable no-param-reassign */
-      // Internal mutations are reversed before return
-      const page = request._params.page;
-      const _embed = request._params._embed;
-      delete request._params.page;
-      delete request._params._embed;
-
-      const uid = request._renderURI();
-      request._params.page = page;
-      request._params._embed = _embed;
-
-      return uid.replace(api._options.endpoint, '');
-    },
-
-    embed(_embedded, toEmbed, link, relName) {
-      let linkRenamed = relName.replace(/^https:\/\/api\.w\.org\//, '');
-
-      switch (linkRenamed) {
-        case 'featuredmedia': linkRenamed = 'featured_media'; break;
-        case 'term':
-          linkRenamed = link.href.replace(/\?.*$/, '').replace(/.*\/([^\/]+)$/, '$1');
-          break;
-        default:
-      }
-
-      return { ..._embedded, [linkRenamed]: toEmbed };
-    },
-
-    getUrl(request) {
-      return request._renderURI();
-    },
-
-    getAggregator(url, { api }) {
-      let uri = url.replace(api._options.endpoint, '').replace(/\?.*$/, '');
-      const namespace = findKey(api._ns, (factory, ns) => uri.indexOf(ns) === 0);
-
-      if (!namespace) return null;
-
-      uri = uri.replace(`${namespace}/`, '');
-      const fragments = uri.split('/');
-      const [resource] = fragments;
-      const query = api[resource]();
-      let aggregator = resource;
-
-      for (let piece = 1; piece < fragments.length; piece++) {
-        const id = find(query._levels[piece], cmp => cmp.validate(fragments[piece]));
-
-        if (!id) {
-          return false;
-        }
-
-        if (!id.component.match(namedGroupRegex)) {
-          aggregator += capitalize(id.component);
-        }
-      }
-
-      if (aggregator === 'usersMe') return 'users';
-
-      return aggregator;
-    },
-
-    callAPI(request, operation, params) {
-      return request.embed()[operation](params);
-    },
+    ttl: 60000
   }
 
   indexers = {}
@@ -210,7 +99,7 @@ export default class ReduxWPAPI {
         lastCacheUpdate = cache.lastCacheUpdate;
       } else {
         cache = state.getIn(['requestsByQuery', payload.uid, payload.page]);
-        data = cache.get('data');
+        data = state.get('data');
       }
 
       if (cache && (localID || (isUndefined(localID) && !cache.get('error')))) {
@@ -241,7 +130,7 @@ export default class ReduxWPAPI {
       meta,
     });
 
-    return this.settings.callAPI(request, meta.operation, meta.params).then(
+    return this.settings.fetch(request, meta.operation, meta.params).then(
       response =>
         next({
           type: REDUX_WP_API_SUCCESS,
@@ -273,7 +162,7 @@ export default class ReduxWPAPI {
           newState = (
             newState
             .mergeIn(['requestsByQuery', uid, page], {
-              status: READY,
+              status: resolved,
               operation: action.meta.operation,
               error: false,
               requestAt: action.payload.lastCacheUpdate,
@@ -291,7 +180,7 @@ export default class ReduxWPAPI {
         const { name, operation, requestAt } = action.meta;
 
         const requestState = {
-          status: WAITING,
+          status: pending,
           requestAt,
           operation,
         };
@@ -323,7 +212,7 @@ export default class ReduxWPAPI {
 
         const requestState = {
           responseAt,
-          status: READY,
+          status: resolved,
           error: false,
         };
 
@@ -358,7 +247,7 @@ export default class ReduxWPAPI {
         const { error } = action;
         const { page, uid } = action.payload;
         const requestState = {
-          status: ERROR,
+          status: rejected,
           error: {
             message: error.message,
             status: error.status,
@@ -428,7 +317,7 @@ export default class ReduxWPAPI {
             toEmbed = toEmbed[0];
           }
 
-          _embedded = this.settings.embed(_embedded, toEmbed, link, relName);
+          _embedded[this.settings.embedLinkAs({ name: relName, ...link })] = toEmbed;
         });
       });
     }

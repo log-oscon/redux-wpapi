@@ -1,5 +1,5 @@
 import { createSelector } from 'reselect';
-import { WAITING } from './constants/requestStatus';
+import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
 
 export const denormalize = (entities, id, memoized = {}) => {
@@ -42,7 +42,7 @@ export const selectQuery = name => createSelector(
   (request, entities) => {
     if (!request) {
       return {
-        status: WAITING,
+        status: pending,
         error: false,
         data: false,
       };
