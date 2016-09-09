@@ -1,5 +1,6 @@
 # redux-wpapi
 [![npm version](https://img.shields.io/npm/v/redux.svg?style=flat-square)](https://www.npmjs.com/package/redux-wpapi)
+[![Build Status](https://travis-ci.org/log-oscon/redux-wpapi.svg?branch=master)](https://travis-ci.org/log-oscon/redux-wpapi)
 
 A [node-wpapi](https://github.com/WP-API/node-wpapi) integration for a Redux based Application.
 
