@@ -11,6 +11,7 @@ Some guidelines in reading this document:
 
 ## [new release]
 
+* Introduces Adaters, a abstraction of API specifics so ReduxWPAPI can communicate with any other API client.
 * Adds integration with Travis and adds NPM and Travis badges
 * Implements reducer tests ([#6](https://github.com/log-oscon/redux-wpapi/pull/6))
 * Draft on Contributions and the introduction of this `CHANGELOG.md` file ([#5](https://github.com/log-oscon/redux-wpapi/pull/5))
