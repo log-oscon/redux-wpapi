@@ -2,7 +2,7 @@
 
 The following highlights the changes that have been rolled with each new release.
 
-Some guidelines in reading this document:
+Some gcacheIDelines in reading this document:
 
 * The `[new release]` section corresponds to all the changes that have been merged into master, but have not yet been packaged and released.
 * Every other release as it's section hose title is the tag of the release.

@@ -61,11 +61,11 @@ export default class ReduxWPAPI {
   middleware = store => next => action => {
     if (!action || action.type !== REDUX_WP_API_CALL) return next(action);
 
-    const request = this.settings.adapter.makeRequest(action.payload);
+    const request = this.settings.adapter.buildRequest(action.payload);
     const meta = {
       name: action.payload.name,
       aggregator: this.settings.adapter.getAggregator(this.settings.adapter.getUrl(request)),
-      operation: request.operation,
+      operation: this.settings.adapter.getOperation(request),
       params: action.payload.params,
       requestAt: Date.now(),
     };
@@ -79,7 +79,7 @@ export default class ReduxWPAPI {
       const indexes = this.settings.adapter.getIndexes(request);
       const localID = this.getEntityLocalID(state, meta.aggregator, indexes);
 
-      payload.uid = this.settings.adapter.getRequestUID(request);
+      payload.cacheID = this.settings.adapter.generateCacheID(request);
       payload.page = parseInt(this.settings.adapter.getRequestedPage(request) || 1, 10);
 
       if (localID) {
@@ -90,7 +90,7 @@ export default class ReduxWPAPI {
       if (cache) {
         lastCacheUpdate = cache.lastCacheUpdate;
       } else {
-        cache = state.getIn(['requestsByQuery', payload.uid, payload.page]);
+        cache = state.getIn(['requestsByQuery', payload.cacheID, payload.page]);
         data = state.get('data');
       }
 
@@ -100,14 +100,14 @@ export default class ReduxWPAPI {
           meta,
           type: REDUX_WP_API_CACHE_HIT,
           payload: {
-            uid: payload.uid,
+            cacheID: payload.cacheID,
             page: payload.page,
             lastCacheUpdate,
             data,
           },
         });
 
-        const ttl = this.settings.adapter.ttl;
+        const ttl = this.settings.adapter.getTTL(request) || this.settings.ttl;
         if (Date.now() - lastCacheUpdate < ttl) {
           return Promise.resolve(
             store.getState().wp.getIn(['requestsByName', meta.name])
@@ -122,14 +122,14 @@ export default class ReduxWPAPI {
       meta,
     });
 
-    return this.settings.adapter.callAPI(request).then(
+    return this.settings.adapter.sendRequest(request)
+    .then(
       response =>
         next({
           type: REDUX_WP_API_SUCCESS,
           payload: { ...payload, response },
           meta: { ...meta, responseAt: Date.now() },
-        })
-    ).catch(
+        }),
       error =>
         next({
           type: REDUX_WP_API_FAILURE,
@@ -144,23 +144,23 @@ export default class ReduxWPAPI {
   reducer = (state = initialReducerState, action) => {
     switch (action.type) {
       case REDUX_WP_API_CACHE_HIT: {
-        const { data, page, uid } = action.payload;
+        const { data, page, cacheID } = action.payload;
         let newState = state.mergeIn(
           ['requestsByName', action.meta.name],
-          { page, uid }
+          { page, cacheID }
         );
 
-        if (!newState.getIn(['requestsByQuery', uid, page])) {
+        if (!newState.getIn(['requestsByQuery', cacheID, page])) {
           newState = (
             newState
-            .mergeIn(['requestsByQuery', uid, page], {
+            .mergeIn(['requestsByQuery', cacheID, page], {
               status: resolved,
               operation: action.meta.operation,
               error: false,
               requestAt: action.payload.lastCacheUpdate,
               responseAt: action.payload.lastCacheUpdate,
             })
-            .setIn(['requestsByQuery', uid, 1, 'data'], data)
+            .setIn(['requestsByQuery', cacheID, 1, 'data'], data)
           );
         }
 
@@ -178,15 +178,15 @@ export default class ReduxWPAPI {
         };
 
         if (operation === 'get') {
-          const { page, uid } = action.payload;
-          let pagination = state.getIn(['requestsByQuery', uid, 'pagination']);
+          const { page, cacheID } = action.payload;
+          let pagination = state.getIn(['requestsByQuery', cacheID, 'pagination']);
           pagination = pagination || {};
 
           return (
             state
-            .mergeIn(['requestsByName', name], { page, uid })
-            .setIn(['requestsByQuery', uid, 'pagination'], pagination)
-            .mergeIn(['requestsByQuery', uid, page], requestState)
+            .mergeIn(['requestsByName', name], { page, cacheID })
+            .setIn(['requestsByQuery', cacheID, 'pagination'], pagination)
+            .mergeIn(['requestsByQuery', cacheID, page], requestState)
           );
         }
 
@@ -199,7 +199,7 @@ export default class ReduxWPAPI {
       case REDUX_WP_API_SUCCESS: {
         let newState = state;
         const { payload, meta: { name, aggregator, requestAt, responseAt } } = action;
-        const { uid, page, response } = payload;
+        const { cacheID, page, response } = payload;
         let body = response;
 
         const requestState = {
@@ -222,9 +222,9 @@ export default class ReduxWPAPI {
 
         if (action.meta.operation === 'get') {
           const pagination = this.settings.adapter.getPagination(response);
-          newState = newState.mergeIn(['requestsByQuery', uid, page], requestState);
-          newState = newState.setIn(['requestsByQuery', uid, page, 'data'], data);
-          newState = newState.setIn(['requestsByQuery', uid, 'pagination'], pagination);
+          newState = newState.mergeIn(['requestsByQuery', cacheID, page], requestState);
+          newState = newState.setIn(['requestsByQuery', cacheID, page, 'data'], data);
+          newState = newState.setIn(['requestsByQuery', cacheID, 'pagination'], pagination);
         } else if (newState.getIn(['requestsByName', name, 'requestAt']) === requestAt) {
           newState = (
             newState
@@ -237,7 +237,7 @@ export default class ReduxWPAPI {
       }
       case REDUX_WP_API_FAILURE: {
         const { error } = action;
-        const { page, uid } = action.payload;
+        const { page, cacheID } = action.payload;
         const requestState = {
           status: rejected,
           error: {
@@ -247,7 +247,7 @@ export default class ReduxWPAPI {
         };
 
         if (action.meta.operation === 'get') {
-          return state.mergeIn(['requestsByQuery', uid, page], requestState);
+          return state.mergeIn(['requestsByQuery', cacheID, page], requestState);
         }
 
         return state.mergeIn(['requestsByName', action.meta.name], requestState);

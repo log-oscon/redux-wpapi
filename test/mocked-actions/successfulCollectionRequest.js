@@ -4,7 +4,7 @@ import collectionResponse from '../data/collectionResponse';
 export default {
   type: REDUX_WP_API_SUCCESS,
   payload: {
-    uid: '/namespace/any',
+    cacheID: '/namespace/any',
     page: 1,
     response: collectionResponse,
   },

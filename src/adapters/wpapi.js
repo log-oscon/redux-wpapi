@@ -1,11 +1,12 @@
 import find from 'lodash/find';
-import nthArg from 'lodash/nthArg';
 import findKey from 'lodash/findKey';
 import reduce from 'lodash/reduce';
 import capitalize from 'lodash/capitalize';
 
 /**
- * This adapter connects `node-wpapi` to `redux-wpapi`, abstracting any specificity.
+ * This adapter connects `node-wpapi` to `redux-wpapi`, abstracting any
+ * specificity.
+ *
  * @type {adapter}
  */
 export default class WPAPIAdapter {
@@ -36,9 +37,9 @@ export default class WPAPIAdapter {
   ].join(''));
 
   /**
-   * aggregators' unique properties to be indexed.
+   * Aggregators' unique properties to be indexed
    */
-  customcacheindexes = {
+  customCacheIndexes = {
     taxonomies: ['slug'],
   };
 
@@ -51,32 +52,39 @@ export default class WPAPIAdapter {
     if (!settings.api) {
       throw new Error('[ReduxWPAPI WPAPI Adapter]: api client must be provided');
     }
-
+    this.defaultTTL = settings.ttl;
     this.api = settings.api;
   }
 
   /**
-   * Transform the resource before indexing, useful to remove unused attributes
+   * Transforms the resource before indexing
    *
-   * @param {Object} resource Each individual resource
-   */
-  transformResource = nthArg(0)
-
-  /**
-   * Extracts current page from a given request.
+   * This is useful to remove unused attributes.
    *
-   * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
-   * @return {Number} current page.
+   * @param  {Object} resource Each individual resource
+   * @return {Object}          Resource transformed
    */
-  getRequestedPage(request) {
-    return request._params.page;
+  transformResource(resource) {
+    return resource;
   }
 
   /**
-   * Extracts pagination params from Response, such as `totalPages` and `total`.
+   * Extracts current page from a given request
+   *
+   * @param {Object} request Request provided by consumer through action `request` param
+   * @return {Number} current page
+   */
+  getRequestedPage({ wpRequest }) {
+    return wpRequest._params.page;
+  }
+
+  /**
+   * Extracts pagination params from Response
+   *
+   * It is up to the api decide the shape of pagination, `totalPages` and `total` are a common case.
    *
    * @param {Object|Array} response Response resulted by `callAPI` operation
-   * @return {Object} pagination params such as `total` and `totalPages`.
+   * @return {Object}               Pagination params such as `total` and `totalPages`
    */
   getPagination(response) {
     const { total, totalPages } = response._paging || {};
@@ -87,21 +95,23 @@ export default class WPAPIAdapter {
   }
 
   /**
-   * Extracts params from request which are going to be used to search resource within local cache.
-   * It will work only with previously indexed in that aggregator.
+   * Extracts params from request for finding local cache.
    *
-   * FIXME provisional method while pending WP-API/node-wpapi#213
+   * These params are going to be used to search resource within local cache. It will work only with
+   * previously indexed in that aggregator.
    *
-   * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
+   * FIXME: provisional method while pending WP-API/node-wpapi#213
+   *
+   * @param {Object} request Request provided by consumer through action `request` param
    * @return {Object} params used to search resource within local cache.
    */
-  getIndexes(request) {
+  getIndexes({ wpRequest }) {
     /* eslint-disable no-param-reassign */
     // Internal mutations inside reduce function
     let lastFragment = null;
     let unresolvedNesting = 1;
-    const foundIndexers = reduce(request._path, (indexers, fragment, piece) => {
-      const id = find(request._levels[piece], cmp => cmp.validate(fragment));
+    const foundIndexers = reduce(wpRequest._path, (indexers, fragment, piece) => {
+      const id = find(wpRequest._levels[piece], cmp => cmp.validate(fragment));
 
       if (!id) return indexers;
       const name = id.component.match(WPAPIAdapter.namedGroupRegex);
@@ -114,7 +124,7 @@ export default class WPAPIAdapter {
       }
 
       return indexers;
-    }, { ...request._params });
+    }, { ...wpRequest._params });
 
     if (!foundIndexers.id && lastFragment && unresolvedNesting === 1) {
       foundIndexers.id = lastFragment;
@@ -124,37 +134,40 @@ export default class WPAPIAdapter {
   }
 
   /**
-   * Generates Cache ID to a given Request. This Cache ID should be the same to all requests that
-   * have the same query and differs only by pagination arguments.
+   * Generates Cache ID
    *
-   * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
-   * @return {String} A Cache ID to given request.
+   * This Cache ID should be the same for all requests that have the same query and differs only by
+   * pagination arguments.
+   *
+   * @param {Object} request Request provided by consumer through action `request` param
+   * @return {String}        A Cache ID to given request
    */
-  generateCacheID(request) {
+  generateCacheID({ wpRequest }) {
     /* eslint-disable no-param-reassign */
     // Internal mutations are reversed before return
-    const page = request._params.page;
-    const _embed = request._params._embed;
+    const page = wpRequest._params.page;
+    const _embed = wpRequest._params._embed;
 
-    delete request._params.page;
-    delete request._params._embed;
+    delete wpRequest._params.page;
+    delete wpRequest._params._embed;
 
-    const uid = request._renderURI();
+    const cacheID = wpRequest._renderURI();
 
-    request._params.page = page;
-    request._params._embed = _embed;
+    wpRequest._params.page = page;
+    wpRequest._params._embed = _embed;
 
-    return uid.replace(this.api._options.endpoint, '');
+    return cacheID.replace(this.api._options.endpoint, '');
   }
 
   /**
+   * Give name to a given link (relationship)
+   *
    * Decides how embedded resources brought by a given link will be identified after denormalization
    *
-   * @param {Object} link - Relationship object between resources
-   * @param {String} link.name - Relationship name between resources
-   * @param {String} link.href - Source of current link's resources
-   *
-   * @return {String} property to which resources will be embedded after denormalization
+   * @param {Object} link      Relationship object between resources
+   * @param {String} link.name Relationship name between resources
+   * @param {String} link.href Source of current link's resources
+   * @return {String}          Property to which resources will be embedded after denormalization
    */
   embedLinkAs(link) {
     let linkRenamed = link.name.replace(/^https:\/\/api\.w\.org\//, '');
@@ -171,29 +184,34 @@ export default class WPAPIAdapter {
   }
 
   /**
-   * Retrieves the URL of a given request, needed in order to get its aggregator.
+   * Converts a request into a URL
    *
-   * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
+   * This URL is needed in order to get its resources aggregator.
+   *
+   * @param  {Object} request Request provided by consumer through the action `request` param
+   * @return {Object}         The Request URL
    */
-  getUrl(request) {
-    return request._renderURI();
+  getUrl({ wpRequest }) {
+    return wpRequest._renderURI();
   }
 
   /**
+   * Get aggregator for URL
+   *
    * Infers the aggregator identifier of a given URL to which all resulting resources are going to
    * be associated with. An aggregator is a set containing resources indexed by its ids and by the
    * its custom indexers.
    *
-   * @param {String} url URL from which the aggregator will be infered
+   * @param  {String}      url          URL from which the aggregator will be infered
    * @return {String|null} aggregatorID String to which all URL direct resources will be associated
-                           with or null, if resources musn't be indexed.
+   *                                    with or null, if resources musn't be indexed
    */
   getAggregator(url) {
     let uri = url.replace(this.api._options.endpoint, '').replace(/\?.*$/, '');
     const namespace = findKey(this.api._ns, (factory, ns) => uri.indexOf(ns) === 0);
 
     // No unregistered route/namespace will going to be indexed by default.
-    // FIXME does this works with `customRoutes`?
+    // FIXME: does this works with `customRoutes`?
     if (!namespace) return null;
 
     // Skips namespace, takes fragments and preserves only static parts
@@ -221,41 +239,60 @@ export default class WPAPIAdapter {
     return aggregator;
   }
 
-
   /**
-   * Deals with consumer input through action and produces the request to attend be later fetched.
-   * The request must carry at least operation (get|create|update\delete) and required data in order
-   * to call API later at `callAPI`.
+   * Define a time to live for request
    *
-   * @param {Object} payload - the action payload
-   * @param {Object} payload.request - the lib consumer input for calling the api
-   * @param {Object} payload.aditionalParams - aditional params in order to make request, generally
-   *                                           meta data such as method or header to be handled by
-   *                                           `callAPI`.
+   * It allows adapter define the ttl per request basis
+   *
+   * @param  {Object} request Request provided by consumer through action `request` param
+   * @return {Number}         The time to live of request's resources
    */
-  buildRequest(payload) {
-    const request = payload.requestBuilder(this.api);
-    const { operation = 'post', ...body } = payload.aditionalParams;
-
-    request.operation = operation;
-    request._body = body;
-
-    return request;
+  getTTL() {
+    return this.defaultTTL;
   }
 
   /**
-   * Effectively calls the API given a request, operation and its params. It is expected to return
-   * a promise which resolves to a data consumable by both `getBody` and `getPagination`. In case of
-   * rejection, a reason is expected under `message` property from Error.
+   * Retrieves request operation
    *
-   * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
-   * @param {String} [operation="get"] Operation to apply remotely
-   * @param {Object} [params] Params to apply remotely
-   *
-   * @return {Promise} The future result of the operation
+   * @param  {Object} request Request provided by consumer through action `request` param
+   * @return {('get'|'create'|'update'|'delete')} The request operation
    */
-  callAPI(request) {
+  getOperation(request) {
+    return request.operation;
+  }
+
+  /**
+   * Builds the Request object
+   *
+   * Deals with consumer input through an action and produces the request to attend be later
+   * fetched. The request must carry at least operation (get|create|update\delete) and required data
+   * in order to call API later at `callAPI`.
+   *
+   * @param  {Object} payload                 The action payload
+   * @param  {Object} payload.request         The lib consumer input for calling the api
+   * @param  {Object} payload.aditionalParams Aditional params in order to make request, generally
+   *                                          meta data such as method or header to be handled by
+   *                                          `callAPI`
+   * @return {Object}                         The Request Object
+   */
+  buildRequest({ request: requestBuilder, aditionalParams }) {
+    const wpRequest = requestBuilder(this.api);
+    const { operation = 'get', ...body } = aditionalParams;
+
+    return { wpRequest, operation, body };
+  }
+
+  /**
+   * Sends API request
+   *
+   * It is expected to return a promise which resolves to a data consumable by both `getBody` and
+   * `getPagination`. In case of rejection, a reason is expected under message property from Error.
+   *
+   * @param  {Object}  request Provided by consumer through the action `request` param
+   * @return {Promise}         The future result of the operation
+   */
+  sendRequest({ wpRequest, operation }) {
     // Embeds any directly embeddable resource linked to current resource(s)
-    return request.embed()[request.operation](request._body);
+    return wpRequest.embed()[operation](wpRequest._body);
   }
 }

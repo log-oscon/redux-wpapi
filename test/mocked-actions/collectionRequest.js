@@ -3,7 +3,7 @@ import { REDUX_WP_API_REQUEST } from '../../src/constants/actions';
 export default {
   type: REDUX_WP_API_REQUEST,
   payload: {
-    uid: '/namespace/any',
+    cacheID: '/namespace/any',
     page: 1,
   },
   meta: {

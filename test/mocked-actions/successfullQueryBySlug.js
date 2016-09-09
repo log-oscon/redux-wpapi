@@ -4,7 +4,7 @@ import queryBySlugResponse from '../data/queryBySlugResponse';
 export default {
   type: REDUX_WP_API_SUCCESS,
   payload: {
-    uid: '/namespace/any?slug=dumb2',
+    cacheID: '/namespace/any?slug=dumb2',
     page: 1,
     response: queryBySlugResponse,
   },

@@ -26,13 +26,13 @@ export const selectQuery = name => createSelector(
     (currentRequest, cache) => {
       if (!currentRequest) return false;
 
-      const uid = currentRequest.get('uid');
+      const cacheID = currentRequest.get('cacheID');
       const page = currentRequest.get('page');
 
-      if (uid) {
+      if (cacheID) {
         return currentRequest
-        .merge(cache.getIn([uid, page]))
-        .merge(cache.getIn([uid, 'pagination']));
+        .merge(cache.getIn([cacheID, page]))
+        .merge(cache.getIn([cacheID, 'pagination']));
       }
 
       return currentRequest;
