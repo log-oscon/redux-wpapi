@@ -4,15 +4,12 @@ import defaultsDeep from 'lodash/defaultsDeep';
 import nthArg from 'lodash/nthArg';
 import mapKeys from 'lodash/mapKeys';
 import forEach from 'lodash/forEach';
-import findKey from 'lodash/findKey';
-import reduce from 'lodash/reduce';
 import find from 'lodash/find';
-import capitalize from 'lodash/capitalize';
 import Immutable from 'immutable';
 import isArray from 'lodash/isArray';
 import isUndefined from 'lodash/isUndefined';
-import namedGroupRegex from './namedGroupRegexp';
 import { selectQuery } from './selectors';
+import WPAPIAdapter from './adapters/wpapi';
 
 import {
   REDUX_WP_API_CALL,
@@ -20,7 +17,6 @@ import {
   REDUX_WP_API_SUCCESS,
   REDUX_WP_API_FAILURE,
   REDUX_WP_API_CACHE_HIT,
-  REDUX_WP_API_PROVIDE,
 } from './constants/actions';
 
 import {
@@ -41,9 +37,9 @@ export default class ReduxWPAPI {
   static displayName = '[REDUX-WP-API]';
 
   static defaultSettings = {
-    beforeIndexing: nthArg(0),
+    transformResource: nthArg(0),
     timeout: 30000,
-    ttl: 60000
+    ttl: 60000,
   }
 
   indexers = {}
@@ -51,30 +47,25 @@ export default class ReduxWPAPI {
   constructor(settings) {
     this.settings = defaultsDeep({}, settings, ReduxWPAPI.defaultSettings);
 
-    if (!this.settings.api) {
-      throw new Error(`${ReduxWPAPI.displayName}: 'api client must be provided`);
+    if (!this.settings.adapter) {
+      this.settings.adapter = new WPAPIAdapter(this.settings);
     }
 
     this.settings.customCacheIndexes = {
-      ...ReduxWPAPI.defaultSettings, // reinforces demandatory indexes besides id
+       // reinforces demandatory indexes besides id
+      ...(this.settings.adapter.customCacheIndexes || {}),
       ...this.settings.customCacheIndexes,
     };
   }
 
   middleware = store => next => action => {
-    if (!action) return next(action);
+    if (!action || action.type !== REDUX_WP_API_CALL) return next(action);
 
-    switch (action.type) {
-      case REDUX_WP_API_CALL: break;
-      case REDUX_WP_API_PROVIDE: return action.payload.accesser(this.settings);
-      default: return next(action);
-    }
-
-    const request = action.payload.requestBuilder(this.settings.api);
+    const request = this.settings.adapter.adapter.makeRequest(action.payload);
     const meta = {
       name: action.payload.name,
-      aggregator: this.settings.getAggregator(this.settings.getUrl(request), this.settings),
-      operation: action.payload.operation,
+      aggregator: this.settings.adapter.getAggregator(this.settings.adapter.getUrl(request)),
+      operation: request.operation,
       params: action.payload.params,
       requestAt: Date.now(),
     };
@@ -85,10 +76,11 @@ export default class ReduxWPAPI {
       let lastCacheUpdate;
       let data;
       const state = store.getState().wp;
-      const indexes = this.settings.getIndexes(request, this.settings);
+      const indexes = this.settings.adapter.getIndexes(request);
       const localID = this.getEntityLocalID(state, meta.aggregator, indexes);
-      payload.uid = this.settings.getRequestUID(request, this.settings);
-      payload.page = parseInt(this.settings.getRequestedPage(request, this.settings) || 1, 10);
+
+      payload.uid = this.settings.adapter.getRequestUID(request);
+      payload.page = parseInt(this.settings.adapter.getRequestedPage(request) || 1, 10);
 
       if (localID) {
         cache = state.getIn(['entities', localID]);
@@ -115,7 +107,7 @@ export default class ReduxWPAPI {
           },
         });
 
-        const ttl = this.settings.ttl;
+        const ttl = this.settings.adapter.ttl;
         if (Date.now() - lastCacheUpdate < ttl) {
           return Promise.resolve(
             store.getState().wp.getIn(['requestsByName', meta.name])
@@ -130,7 +122,7 @@ export default class ReduxWPAPI {
       meta,
     });
 
-    return this.settings.fetch(request, meta.operation, meta.params).then(
+    return this.settings.adapter.callAPI(request).then(
       response =>
         next({
           type: REDUX_WP_API_SUCCESS,
@@ -229,7 +221,7 @@ export default class ReduxWPAPI {
         });
 
         if (action.meta.operation === 'get') {
-          const pagination = this.settings.getPagination(response, this.settings);
+          const pagination = this.settings.adapter.getPagination(response);
           newState = newState.mergeIn(['requestsByQuery', uid, page], requestState);
           newState = newState.setIn(['requestsByQuery', uid, page, 'data'], data);
           newState = newState.setIn(['requestsByQuery', uid, 'pagination'], pagination);
@@ -296,7 +288,7 @@ export default class ReduxWPAPI {
       const alisedEmbedded = this.resolveAliases(entity._embedded, curies);
       forEach(alisedEmbedded, (embeddable, relName) => {
         forEach(_links[relName], (link, index) => {
-          const embeddedAggregator = this.settings.getAggregator(link.href, this.settings);
+          const embeddedAggregator = this.settings.adapter.getAggregator(link.href);
           if (!embeddedAggregator) return;
 
           let toEmbed = alisedEmbedded[relName][index];
@@ -317,7 +309,7 @@ export default class ReduxWPAPI {
             toEmbed = toEmbed[0];
           }
 
-          _embedded[this.settings.embedLinkAs({ name: relName, ...link })] = toEmbed;
+          _embedded[this.settings.adapter.embedLinkAs({ name: relName, ...link })] = toEmbed;
         });
       });
     }
@@ -328,13 +320,13 @@ export default class ReduxWPAPI {
 
     newState = newState.setIn(
       ['entities', localID],
-      this.settings.beforeIndexing({
+      this.settings.transformResource(this.settings.adapter.transformResource({
         ...oldState,
         ...entity,
         _links,
         _embedded,
         lastCacheUpdate: meta.lastCacheUpdate,
-      }, this.settings)
+      }))
     );
 
     const indexers = this.settings.customCacheIndexes[aggregator];

@@ -1,63 +1,81 @@
 import find from 'lodash/find';
+import nthArg from 'lodash/nthArg';
 import findKey from 'lodash/findKey';
 import reduce from 'lodash/reduce';
 import capitalize from 'lodash/capitalize';
 
 /**
-* Regular Expression to identify a capture group in PCRE formats
-* `(?<name>regex)`, `(?'name'regex)` or `(?P<name>regex)` (see
-* regular-expressions.info/refext.html); RegExp is built as a string
-* to enable more detailed annotation.
-*
-* @type {RegExp}
-* @author kadamwhite
-* @link https://github.com/WP-API/node-wpapi/blob/0b4fbe8740fe4bf5b8c4e1a5c06127a9325d5d6d/lib/util/named-group-regexp.js
-*/
-const namedGroupRegex = new RegExp([
-  // Capture group start
-  '\\(\\?',
-  // Capture group name begins either `P<`, `<` or `'`
-  '(?:P<|<|\')',
-  // Everything up to the next `>`` or `'` (depending) will be the capture group name
-  '([^>\']+)',
-  // Capture group end
-  '[>\']',
-  // Get everything up to the end of the capture group: this is the RegExp used
-  // when matching URLs to this route, which we can use for validation purposes.
-  '([^\\)]*)',
-  // Capture group end
-  '\\)',
-].join(''));
-
-/**
  * This adapter connects `node-wpapi` to `redux-wpapi`, abstracting any specific.
  * @type {adapter}
  */
-export default {
+export default class WPAPIAdapter {
   /**
-   * Aggregators' unique properties to be indexed.
+  * Regular Expression to identify a capture group in PCRE formats
+  * `(?<name>regex)`, `(?'name'regex)` or `(?P<name>regex)` (see
+  * regular-expressions.info/refext.html); RegExp is built as a string
+  * to enable more detailed annotation.
+  *
+  * @type {RegExp}
+  * @author kadamwhite
+  * @link https://github.com/WP-API/node-wpapi/blob/0b4fbe8740fe4bf5b8c4e1a5c06127a9325d5d6d/lib/util/named-group-regexp.js
+  */
+  static namedGroupRegex = new RegExp([
+    // Capture group start
+    '\\(\\?',
+    // Capture group name begins either `P<`, `<` or `'`
+    '(?:P<|<|\')',
+    // Everything up to the next `>`` or `'` (depending) will be the capture group name
+    '([^>\']+)',
+    // Capture group end
+    '[>\']',
+    // Get everything up to the end of the capture group: this is the RegExp used
+    // when matching URLs to this route, which we can use for validation purposes.
+    '([^\\)]*)',
+    // Capture group end
+    '\\)',
+  ].join(''));
+
+  /**
+   * aggregators' unique properties to be indexed.
    */
-  customCacheIndexes: {
+  customcacheindexes = {
     taxonomies: ['slug'],
-  },
+  };
+
+  /**
+   * Sets up the adapter with the API settings
+   *
+   * @param {Object} settings
+   */
+  constructor(settings) {
+    if (!settings.api) {
+      throw new Error('[ReduxWPAPI WPAPI Adapter]: api client must be provided');
+    }
+
+    this.api = settings.api;
+  }
+
+  /**
+   * Transform the resource before indexing, useful to remove unused attributes
+   *
+   * @param {Object} resource Each individual resource
+   */
+  transformResource = nthArg(0)
 
   /**
    * Extracts current page from a given request.
    *
    * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
-   * @param {Object} adapter The current adapter, so any aditional option can be extracted.
    * @return {Number} current page.
    */
   getRequestedPage(request) {
     return request._params.page;
-  },
+  }
 
   /**
    * Extracts pagination params from Response, such as `totalPages` and `total`.
    *
    * @param {Object|Array} response Response resulted by `callAPI` operation
-   * @param {Object} adapter The current adapter, so any aditional option can be extracted.
-   *
    * @return {Object} pagination params such as `total` and `totalPages`.
    */
   getPagination(response) {
@@ -66,7 +84,7 @@ export default {
       total: parseInt(total || 1, 10),
       totalPages: parseInt(totalPages || 1, 10),
     };
-  },
+  }
 
   /**
    * Extracts params from request which are going to be used to search resource within local cache.
@@ -75,8 +93,6 @@ export default {
    * FIXME provisional method while pending WP-API/node-wpapi#213
    *
    * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
-   * @param {Object} adapter The current adapter, so any aditional option can be extracted.
-   *
    * @return {Object} params used to search resource within local cache.
    */
   getIndexes(request) {
@@ -88,7 +104,7 @@ export default {
       const id = find(request._levels[piece], cmp => cmp.validate(fragment));
 
       if (!id) return indexers;
-      const name = id.component.match(namedGroupRegex);
+      const name = id.component.match(WPAPIAdapter.namedGroupRegex);
 
       if (name) {
         lastFragment = indexers[name[1]] = fragment;
@@ -105,18 +121,16 @@ export default {
     }
 
     return foundIndexers;
-  },
+  }
 
   /**
    * Generates Cache ID to a given Request. This Cache ID should be the same to all requests that
    * have the same query and differs only by pagination arguments.
    *
    * @param {Object} request Request provided by consumer through `wp` action creator requestBuilder
-   * @param {Object} adapter The current adapter, so any aditional option can be extracted.
-   *
    * @return {String} A Cache ID to given request.
    */
-  generateCacheID(request, { api }) {
+  generateCacheID(request) {
     /* eslint-disable no-param-reassign */
     // Internal mutations are reversed before return
     const page = request._params.page;
@@ -130,8 +144,8 @@ export default {
     request._params.page = page;
     request._params._embed = _embed;
 
-    return uid.replace(api._options.endpoint, '');
-  },
+    return uid.replace(this.api._options.endpoint, '');
+  }
 
   /**
    * Decides how embedded resources brought by a given link will be identified after denormalization
@@ -154,7 +168,7 @@ export default {
     }
 
     return linkRenamed;
-  },
+  }
 
   /**
    * Retrieves the URL of a given request, needed in order to get its aggregator.
@@ -163,7 +177,7 @@ export default {
    */
   getUrl(request) {
     return request._renderURI();
-  },
+  }
 
   /**
    * Infers the aggregator identifier of a given URL to which all resulting resources are going to
@@ -171,14 +185,12 @@ export default {
    * its custom indexers.
    *
    * @param {String} url URL from which the aggregator will be infered
-   * @param {Object} adapter The current adapter, so any aditional option can be extracted.
-   *
    * @return {String|null} aggregatorID String to which all URL direct resources will be associated
                            with or null, if resources musn't be indexed.
    */
-  getAggregator(url, { api }) {
-    let uri = url.replace(api._options.endpoint, '').replace(/\?.*$/, '');
-    const namespace = findKey(api._ns, (factory, ns) => uri.indexOf(ns) === 0);
+  getAggregator(url) {
+    let uri = url.replace(this.api._options.endpoint, '').replace(/\?.*$/, '');
+    const namespace = findKey(this.api._ns, (factory, ns) => uri.indexOf(ns) === 0);
 
     // No unregistered route/namespace will going to be indexed by default.
     // FIXME does this works with `customRoutes`?
@@ -188,7 +200,7 @@ export default {
     uri = uri.replace(`${namespace}/`, '');
     const fragments = uri.split('/');
     const [resource] = fragments;
-    const query = api[resource]();
+    const query = this.api[resource]();
     let aggregator = resource;
 
     for (let piece = 1; piece < fragments.length; piece++) {
@@ -198,7 +210,7 @@ export default {
         return false;
       }
 
-      if (!id.component.match(namedGroupRegex)) {
+      if (!id.component.match(WPAPIAdapter.namedGroupRegex)) {
         aggregator += capitalize(id.component);
       }
     }
@@ -207,7 +219,29 @@ export default {
     if (aggregator === 'usersMe') return 'users';
 
     return aggregator;
-  },
+  }
+
+
+  /**
+   * Deals with consumer input through action and produces the request to attend be later fetched.
+   * The request must carry at least operation (get|create|update\delete) and required data in order
+   * to call API later at `callAPI`.
+   *
+   * @param {Object} payload - the action payload
+   * @param {Object} payload.request - the lib consumer input for calling the api
+   * @param {Object} payload.aditionalParams - aditional params in order to make request, generally
+   *                                           meta data such as method or header to be handled by
+   *                                           `callAPI`.
+   */
+  buildRequest(payload) {
+    const request = payload.requestBuilder(this.api);
+    const { operation = 'post', ...body } = payload.aditionalParams;
+
+    request.operation = operation;
+    request._body = body;
+
+    return request;
+  }
 
   /**
    * Effectively calls the API given a request, operation and its params. It is expected to return
@@ -220,8 +254,8 @@ export default {
    *
    * @return {Promise} The future result of the operation
    */
-  callAPI(request, operation, params) {
+  callAPI(request) {
     // Embeds any directly embeddable resource linked to current resource(s)
-    return request.embed()[operation](params);
-  },
-};
+    return request.embed()[request.operation](request._body);
+  }
+}
