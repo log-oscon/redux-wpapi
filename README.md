@@ -74,7 +74,7 @@ export default connect({
 
 All contributions are welcome, and very much appreciated.
 
-We are preparing some helper [documents](https://github.com/log-oscon/redux-wpapi/issues/4) to facilitate the process (hopefully), but for now we're following the these gcacheIDelines:
+We are preparing some helper [documents](https://github.com/log-oscon/redux-wpapi/issues/4) to facilitate the process (hopefully), but for now we're following the these guidelines:
 
 * Be reasonable
 * Give as much detailed information as you can
