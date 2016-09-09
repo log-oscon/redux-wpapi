@@ -61,7 +61,7 @@ export default class ReduxWPAPI {
   middleware = store => next => action => {
     if (!action || action.type !== REDUX_WP_API_CALL) return next(action);
 
-    const request = this.settings.adapter.adapter.makeRequest(action.payload);
+    const request = this.settings.adapter.makeRequest(action.payload);
     const meta = {
       name: action.payload.name,
       aggregator: this.settings.adapter.getAggregator(this.settings.adapter.getUrl(request)),
