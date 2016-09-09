@@ -5,7 +5,7 @@ import reduce from 'lodash/reduce';
 import capitalize from 'lodash/capitalize';
 
 /**
- * This adapter connects `node-wpapi` to `redux-wpapi`, abstracting any specific.
+ * This adapter connects `node-wpapi` to `redux-wpapi`, abstracting any specificity.
  * @type {adapter}
  */
 export default class WPAPIAdapter {
