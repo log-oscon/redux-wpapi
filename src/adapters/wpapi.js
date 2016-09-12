@@ -52,6 +52,7 @@ export default class WPAPIAdapter {
     if (!settings.api) {
       throw new Error('[ReduxWPAPI WPAPI Adapter]: api client must be provided');
     }
+
     this.defaultTTL = settings.ttl;
     this.api = settings.api;
   }

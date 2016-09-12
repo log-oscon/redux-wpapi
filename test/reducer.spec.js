@@ -30,8 +30,8 @@ describe('Reducer', () => {
   it('should have the right Immutable instances for its initial state', () => {
     const initialState = reducer(undefined, {});
     expect(initialState).toBeA(Immutable.Map);
-    expect(initialState.get('entities')).toBeA(Immutable.List);
-    expect(initialState.get('entitiesIndexes')).toBeA(Immutable.Map);
+    expect(initialState.get('resources')).toBeA(Immutable.List);
+    expect(initialState.get('resourcesIndexes')).toBeA(Immutable.Map);
     expect(initialState.get('requestsByQuery')).toBeA(Immutable.Map);
     expect(initialState.get('requestsByName')).toBeA(Immutable.Map);
   });
@@ -145,18 +145,18 @@ describe('Reducer', () => {
 
       expect(data).toBeAn(Array);
       expect(data.length).toBe(2);
-      expect(state.getIn(['entities', data[0]]).link)
+      expect(state.getIn(['resources', data[0]]).link)
       .toBe(successfulCollectionRequest.payload.response[0].link);
 
-      expect(state.getIn(['entities', data[1]]).link)
+      expect(state.getIn(['resources', data[1]]).link)
       .toBe(successfulCollectionRequest.payload.response[1].link);
     });
 
     it('should persist locally each found entity exactly once', () => {
       const state = reducer(undefined, successfulCollectionRequest);
-      const entities = state.get('entities');
-      expect(entities.size).toBe(4);
-      expect(entities.toJSON().map(item => item.link))
+      const resources = state.get('resources');
+      expect(resources.size).toBe(4);
+      expect(resources.toJSON().map(item => item.link))
       .toInclude(successfulCollectionRequest.payload.response[0]._embedded.author[0].link)
       .toInclude(successfulCollectionRequest.payload.response[1].link)
       .toInclude(successfulCollectionRequest.payload.response[1]._embedded.author[0].link)
@@ -168,7 +168,7 @@ describe('Reducer', () => {
       const state = reducer(previous, successfullQueryBySlug);
       const queryState = state.getIn(['requestsByQuery', successfullQueryBySlug.payload.cacheID]);
       const [id] = queryState.getIn([1, 'data']);
-      const entity = state.getIn(['entities', id]);
+      const entity = state.getIn(['resources', id]);
       expect(entity).toContain({
         link: successfullQueryBySlug.payload.response[0].link,
       });

@@ -29,8 +29,8 @@ const initialReducerState = Immutable.fromJS({
   requestsByName: {},
   requestsByQuery: {},
 
-  entities: [],
-  entitiesIndexes: {},
+  resources: [],
+  resourcesIndexes: {},
 });
 
 export default class ReduxWPAPI {
@@ -42,18 +42,18 @@ export default class ReduxWPAPI {
     ttl: 60000,
   }
 
-  indexers = {}
-
-  constructor(settings) {
+  constructor({ adapter, ...settings }) {
     this.settings = defaultsDeep({}, settings, ReduxWPAPI.defaultSettings);
 
-    if (!this.settings.adapter) {
-      this.settings.adapter = new WPAPIAdapter(this.settings);
+    if (!adapter) {
+      this.adapter = new WPAPIAdapter(this.settings);
+    } else {
+      this.adapter = adapter;
     }
 
     this.settings.customCacheIndexes = {
        // reinforces demandatory indexes besides id
-      ...(this.settings.adapter.customCacheIndexes || {}),
+      ...(this.adapter.customCacheIndexes || {}),
       ...this.settings.customCacheIndexes,
     };
   }
@@ -61,11 +61,11 @@ export default class ReduxWPAPI {
   middleware = store => next => action => {
     if (!action || action.type !== REDUX_WP_API_CALL) return next(action);
 
-    const request = this.settings.adapter.buildRequest(action.payload);
+    const request = this.adapter.buildRequest(action.payload);
     const meta = {
       name: action.payload.name,
-      aggregator: this.settings.adapter.getAggregator(this.settings.adapter.getUrl(request)),
-      operation: this.settings.adapter.getOperation(request),
+      aggregator: this.adapter.getAggregator(this.adapter.getUrl(request)),
+      operation: this.adapter.getOperation(request),
       params: action.payload.params,
       requestAt: Date.now(),
     };
@@ -76,14 +76,14 @@ export default class ReduxWPAPI {
       let lastCacheUpdate;
       let data;
       const state = store.getState().wp;
-      const indexes = this.settings.adapter.getIndexes(request);
-      const localID = this.getEntityLocalID(state, meta.aggregator, indexes);
+      const indexes = this.adapter.getIndexes(request);
+      const localID = this.getResourceLocalID(state, meta.aggregator, indexes);
 
-      payload.cacheID = this.settings.adapter.generateCacheID(request);
-      payload.page = parseInt(this.settings.adapter.getRequestedPage(request) || 1, 10);
+      payload.cacheID = this.adapter.generateCacheID(request);
+      payload.page = parseInt(this.adapter.getRequestedPage(request) || 1, 10);
 
       if (localID) {
-        cache = state.getIn(['entities', localID]);
+        cache = state.getIn(['resources', localID]);
         data = [localID];
       }
 
@@ -107,7 +107,11 @@ export default class ReduxWPAPI {
           },
         });
 
-        const ttl = this.settings.adapter.getTTL(request) || this.settings.ttl;
+        let ttl = this.adapter.getTTL(request);
+        if (ttl !== 0 && !ttl) {
+          ttl = this.settings.ttl;
+        }
+
         if (Date.now() - lastCacheUpdate < ttl) {
           return Promise.resolve(
             store.getState().wp.getIn(['requestsByName', meta.name])
@@ -122,7 +126,7 @@ export default class ReduxWPAPI {
       meta,
     });
 
-    return this.settings.adapter.sendRequest(request)
+    return this.adapter.sendRequest(request)
     .then(
       response =>
         next({
@@ -215,13 +219,13 @@ export default class ReduxWPAPI {
         const data = [];
         const aditionalData = { lastCacheUpdate: requestState.responseAt };
 
-        body.forEach(entity => {
-          newState = this.indexEntity(newState, aggregator, entity, aditionalData);
-          data.push(this.getEntityLocalID(newState, aggregator, entity));
+        body.forEach(resource => {
+          newState = this.indexResource(newState, aggregator, resource, aditionalData);
+          data.push(this.getResourceLocalID(newState, aggregator, resource));
         });
 
         if (action.meta.operation === 'get') {
-          const pagination = this.settings.adapter.getPagination(response);
+          const pagination = this.adapter.getPagination(response);
           newState = newState.mergeIn(['requestsByQuery', cacheID, page], requestState);
           newState = newState.setIn(['requestsByQuery', cacheID, page, 'data'], data);
           newState = newState.setIn(['requestsByQuery', cacheID, 'pagination'], pagination);
@@ -256,47 +260,47 @@ export default class ReduxWPAPI {
     }
   }
 
-  getEntityLocalID(state, aggregator, entity) {
+  getResourceLocalID(state, aggregator, resource) {
     const indexers = this.settings.customCacheIndexes[aggregator];
     const indexBy = find(
       isArray(indexers) ? ['id'].concat(indexers) : ['id', indexers],
       indexer =>
-        !isUndefined(entity[indexer]) &&
+        !isUndefined(resource[indexer]) &&
         !isUndefined(
-          state.getIn(['entitiesIndexes', aggregator, indexer, entity[indexer]])
+          state.getIn(['resourcesIndexes', aggregator, indexer, resource[indexer]])
         )
     );
 
-    return indexBy && state.getIn(['entitiesIndexes', aggregator, indexBy, entity[indexBy]]);
+    return indexBy && state.getIn(['resourcesIndexes', aggregator, indexBy, resource[indexBy]]);
   }
 
-  indexEntity(state, aggregator, entity, meta) {
+  indexResource(state, aggregator, resource, meta) {
     let newState = state;
     let _embedded;
-    const curies = (entity._links || {}).curies;
-    const _links = this.resolveAliases(entity._links, curies) || {};
+    const curies = (resource._links || {}).curies;
+    const _links = this.resolveAliases(resource._links, curies) || {};
     delete _links.curies;
 
-    let localID = this.getEntityLocalID(state, aggregator, entity);
+    let localID = this.getResourceLocalID(state, aggregator, resource);
     let oldState = {};
     if (!isUndefined(localID)) {
-      oldState = newState.getIn(['entities', localID]);
+      oldState = newState.getIn(['resources', localID]);
     }
 
-    if (entity._embedded) {
+    if (resource._embedded) {
       _embedded = { ...(oldState || { })._embedded };
-      const alisedEmbedded = this.resolveAliases(entity._embedded, curies);
+      const alisedEmbedded = this.resolveAliases(resource._embedded, curies);
       forEach(alisedEmbedded, (embeddable, relName) => {
         forEach(_links[relName], (link, index) => {
-          const embeddedAggregator = this.settings.adapter.getAggregator(link.href);
+          const embeddedAggregator = this.adapter.getAggregator(link.href);
           if (!embeddedAggregator) return;
 
           let toEmbed = alisedEmbedded[relName][index];
           toEmbed = (isArray(toEmbed) ? toEmbed : [toEmbed]).reduce((collection, toBeEmbedded) => {
             if (toBeEmbedded.code === 'rest_no_route') return collection;
 
-            newState = this.indexEntity(newState, embeddedAggregator, toBeEmbedded, meta);
-            collection.push(this.getEntityLocalID(newState, embeddedAggregator, toBeEmbedded));
+            newState = this.indexResource(newState, embeddedAggregator, toBeEmbedded, meta);
+            collection.push(this.getResourceLocalID(newState, embeddedAggregator, toBeEmbedded));
 
             return collection;
           }, []);
@@ -309,20 +313,20 @@ export default class ReduxWPAPI {
             toEmbed = toEmbed[0];
           }
 
-          _embedded[this.settings.adapter.embedLinkAs({ name: relName, ...link })] = toEmbed;
+          _embedded[this.adapter.embedLinkAs({ name: relName, ...link })] = toEmbed;
         });
       });
     }
 
     if (isUndefined(localID)) {
-      localID = newState.get('entities').size;
+      localID = newState.get('resources').size;
     }
 
     newState = newState.setIn(
-      ['entities', localID],
-      this.settings.transformResource(this.settings.adapter.transformResource({
+      ['resources', localID],
+      this.settings.transformResource(this.adapter.transformResource({
         ...oldState,
-        ...entity,
+        ...resource,
         _links,
         _embedded,
         lastCacheUpdate: meta.lastCacheUpdate,
@@ -331,9 +335,9 @@ export default class ReduxWPAPI {
 
     const indexers = this.settings.customCacheIndexes[aggregator];
     forEach(isArray(indexers) ? ['id'].concat(indexers) : ['id', indexers], indexer => {
-      if (!isUndefined(entity[indexer])) {
+      if (!isUndefined(resource[indexer])) {
         newState = newState.setIn(
-          ['entitiesIndexes', aggregator, indexer, entity[indexer]],
+          ['resourcesIndexes', aggregator, indexer, resource[indexer]],
           localID
         );
       }
