@@ -59,6 +59,9 @@
     "webpack": "^1.13.2",
     "wpapi": "^0.9.1"
   },
+  "peerDependency": {
+    "wpapi": "^0.8.0"
+  },
   "npmName": "redux-wpapi",
   "npmFileMap": [
     {
