@@ -3,7 +3,7 @@ import expect from 'expect';
 import WPAPI from 'wpapi';
 import Immutable from 'immutable';
 import ReduxWPAPI from '../src/index.js';
-import { WAITING, READY, ERROR } from '../src/constants/requestStatus';
+import { pending, resolved, rejected } from '../src/constants/requestStatus';
 
 import collectionRequest from './mocked-actions/collectionRequest';
 import modifyingRequest from './mocked-actions/modifyingRequest';
@@ -30,8 +30,8 @@ describe('Reducer', () => {
   it('should have the right Immutable instances for its initial state', () => {
     const initialState = reducer(undefined, {});
     expect(initialState).toBeA(Immutable.Map);
-    expect(initialState.get('entities')).toBeA(Immutable.List);
-    expect(initialState.get('entitiesIndexes')).toBeA(Immutable.Map);
+    expect(initialState.get('resources')).toBeA(Immutable.List);
+    expect(initialState.get('resourcesIndexes')).toBeA(Immutable.Map);
     expect(initialState.get('requestsByQuery')).toBeA(Immutable.Map);
     expect(initialState.get('requestsByName')).toBeA(Immutable.Map);
   });
@@ -44,15 +44,15 @@ describe('Reducer', () => {
 
   describe('`REDUX_WP_API_REQUEST` action', () => {
     describe('operation GET', () => {
-      it('should keep request related data by query\'s uid', () => {
+      it('should keep request related data by query\'s cacheID', () => {
         const state = reducer(undefined, collectionRequest);
-        const queryState = state.getIn(['requestsByQuery', collectionRequest.payload.uid]);
+        const queryState = state.getIn(['requestsByQuery', collectionRequest.payload.cacheID]);
         expect(queryState).toBeAn(Immutable.Map);
         expect(queryState.get('pagination')).toNotBeAn(Immutable.Map);
         expect(queryState.get(collectionRequest.payload.page)).toBeAn(Immutable.Map);
         expect(queryState.get(collectionRequest.payload.page).toJSON())
         .toEqual({
-          status: WAITING,
+          status: pending,
           operation: collectionRequest.meta.operation,
           requestAt: collectionRequest.meta.requestAt,
         });
@@ -66,7 +66,7 @@ describe('Reducer', () => {
         const nameState = state.getIn(['requestsByName', collectionRequest.meta.name]);
 
         expect(nameState.get('page')).toBe(collectionRequest.payload.page);
-        expect(nameState.get('uid')).toBe(collectionRequest.payload.uid);
+        expect(nameState.get('cacheID')).toBe(collectionRequest.payload.cacheID);
       });
 
       it('should keep previous data under query', () => {
@@ -81,8 +81,8 @@ describe('Reducer', () => {
           },
         });
 
-        expect(thirdState.getIn(['requestsByQuery', collectionRequest.payload.uid, 'data']))
-        .toBe(secondState.getIn(['requestsByQuery', collectionRequest.payload.uid, 'data']));
+        expect(thirdState.getIn(['requestsByQuery', collectionRequest.payload.cacheID, 'data']))
+        .toBe(secondState.getIn(['requestsByQuery', collectionRequest.payload.cacheID, 'data']));
       });
     });
 
@@ -96,7 +96,7 @@ describe('Reducer', () => {
           expect(nameState).toBeAn(Immutable.Map);
           expect(nameState.toJSON())
           .toEqual({
-            status: WAITING,
+            status: pending,
             operation: request.meta.operation,
             requestAt: request.meta.requestAt,
             data: false,
@@ -107,9 +107,12 @@ describe('Reducer', () => {
   });
 
   describe('`REDUX_WP_API_SUCCESS` action', () => {
-    it('should keep request related data by query\'s uid for GET operations', () => {
+    it('should keep request related data by query\'s cacheID for GET operations', () => {
       const state = reducer(undefined, successfulCollectionRequest);
-      const queryState = state.getIn(['requestsByQuery', successfulCollectionRequest.payload.uid]);
+      const queryState = state.getIn([
+        'requestsByQuery',
+        successfulCollectionRequest.payload.cacheID,
+      ]);
 
       expect(queryState).toBeAn(Immutable.Map);
       expect(queryState.get('pagination'))
@@ -123,7 +126,7 @@ describe('Reducer', () => {
       const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
       expect(queryState.get(successfulCollectionRequest.payload.page).toJSON())
       .toInclude({
-        status: READY,
+        status: resolved,
         error: false,
         responseAt: successfulCollectionRequest.meta.responseAt,
       });
@@ -132,25 +135,28 @@ describe('Reducer', () => {
       expect(data.length).toBe(2);
     });
 
-    it('should keep local ids instead objects in data, by query\'s uid', () => {
+    it('should keep local ids instead objects in data, by query\'s cacheID', () => {
       const state = reducer(undefined, successfulCollectionRequest);
-      const queryState = state.getIn(['requestsByQuery', successfulCollectionRequest.payload.uid]);
+      const queryState = state.getIn([
+        'requestsByQuery',
+        successfulCollectionRequest.payload.cacheID,
+      ]);
       const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
 
       expect(data).toBeAn(Array);
       expect(data.length).toBe(2);
-      expect(state.getIn(['entities', data[0]]).link)
+      expect(state.getIn(['resources', data[0]]).link)
       .toBe(successfulCollectionRequest.payload.response[0].link);
 
-      expect(state.getIn(['entities', data[1]]).link)
+      expect(state.getIn(['resources', data[1]]).link)
       .toBe(successfulCollectionRequest.payload.response[1].link);
     });
 
     it('should persist locally each found entity exactly once', () => {
       const state = reducer(undefined, successfulCollectionRequest);
-      const entities = state.get('entities');
-      expect(entities.size).toBe(4);
-      expect(entities.toJSON().map(item => item.link))
+      const resources = state.get('resources');
+      expect(resources.size).toBe(4);
+      expect(resources.toJSON().map(item => item.link))
       .toInclude(successfulCollectionRequest.payload.response[0]._embedded.author[0].link)
       .toInclude(successfulCollectionRequest.payload.response[1].link)
       .toInclude(successfulCollectionRequest.payload.response[1]._embedded.author[0].link)
@@ -160,9 +166,9 @@ describe('Reducer', () => {
     it('should update previous entity\'s state', () => {
       const previous = reducer(undefined, successfulCollectionRequest);
       const state = reducer(previous, successfullQueryBySlug);
-      const queryState = state.getIn(['requestsByQuery', successfullQueryBySlug.payload.uid]);
+      const queryState = state.getIn(['requestsByQuery', successfullQueryBySlug.payload.cacheID]);
       const [id] = queryState.getIn([1, 'data']);
-      const entity = state.getIn(['entities', id]);
+      const entity = state.getIn(['resources', id]);
       expect(entity).toContain({
         link: successfullQueryBySlug.payload.response[0].link,
       });
@@ -171,11 +177,16 @@ describe('Reducer', () => {
 
   describe('`REDUX_WP_API_FAILURE` action', () => {
     describe('on get operation', () => {
-      it('should update state on query\'s uid status for GET operations', () => {
+      it('should update state on query\'s cacheID status for GET operations', () => {
         const state = reducer(undefined, unsuccessfulCollectionRequest);
         expect(
-          state.getIn(['requestsByQuery', unsuccessfulCollectionRequest.payload.uid, 1, 'status'])
-        ).toBe(ERROR);
+          state.getIn([
+            'requestsByQuery',
+            unsuccessfulCollectionRequest.payload.cacheID,
+            1,
+            'status',
+          ])
+        ).toBe(rejected);
       });
     });
 
@@ -193,7 +204,7 @@ describe('Reducer', () => {
           const state = reducer(undefined, response);
           expect(
             state.getIn(['requestsByName', response.meta.name, 'status'])
-          ).toBe(ERROR);
+          ).toBe(rejected);
         });
       })
     );
@@ -206,7 +217,7 @@ describe('Reducer', () => {
       const state = reducer(previousState, cacheHitSingle);
       expect(state.getIn(['requestsByName', cacheHitSingle.meta.name]).toJSON())
       .toInclude({
-        uid: cacheHitSingle.payload.uid,
+        cacheID: cacheHitSingle.payload.cacheID,
         page: cacheHitSingle.payload.page,
       });
     });
@@ -215,21 +226,21 @@ describe('Reducer', () => {
       let previousState = reducer(undefined, collectionRequest);
       previousState = reducer(previousState, successfulCollectionRequest);
       const state = reducer(previousState, cacheHitCollection);
-      const { page, uid } = cacheHitCollection.payload;
+      const { page, cacheID } = cacheHitCollection.payload;
 
-      expect(state.getIn(['requestsByQuery', uid, page]))
-      .toBe(previousState.getIn(['requestsByQuery', uid, page]));
+      expect(state.getIn(['requestsByQuery', cacheID, page]))
+      .toBe(previousState.getIn(['requestsByQuery', cacheID, page]));
     });
 
-    it('should always have data as a Array under query\'s uid', () => {
+    it('should always have data as a Array under query\'s cacheID', () => {
       let state = reducer(undefined, collectionRequest);
       state = reducer(state, successfulCollectionRequest);
       state = reducer(state, cacheHitSingle);
-      const { page, uid } = cacheHitSingle.payload;
-      expect(state.getIn(['requestsByQuery', uid, page, 'data'])).toBeAn('array');
+      const { page, cacheID } = cacheHitSingle.payload;
+      expect(state.getIn(['requestsByQuery', cacheID, page, 'data'])).toBeAn('array');
 
       state = reducer(state, cacheHitCollection);
-      const { page: collectionPage, uid: collectionUID } = cacheHitCollection.payload;
+      const { page: collectionPage, cacheID: collectionUID } = cacheHitCollection.payload;
 
       expect(state.getIn(['requestsByQuery', collectionUID, collectionPage, 'data']))
       .toBeAn('array');
