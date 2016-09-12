@@ -8,9 +8,9 @@ Some guidelines in reading this document:
 * Every other release has it's section whose title is the tag of the release.
 * The changes on each release are a list of Pull Requests (PRs) which were merged into master. For every PR we have the short summary followed by a link to the actual merged PR page. Inside the PR are the detailed changes.
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
-* Anotations starting with **[BC]** indicates breaking change.
+* Annotations starting with **[BC]** indicates breaking change.
 
-## [new release]
+## 1.0.0
 
 * Introduce Adapters, an abstraction of API specifics so ReduxWPAPI can communicate with any other API client. ([#8](https://github.com/log-oscon/redux-wpapi/pull/8))
   * **[BC]** Rename `entity` to `resource` for better REST compliance.
