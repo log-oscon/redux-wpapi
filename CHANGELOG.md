@@ -5,21 +5,20 @@ The following highlights the changes that have been rolled with each new release
 Some guidelines in reading this document:
 
 * The `[new release]` section corresponds to all the changes that have been merged into master, but have not yet been packaged and released.
-* Every other release as it's section hose title is the tag of the release.
+* Every other release has it's section whose title is the tag of the release.
 * The changes on each release are a list of Pull Requests (PRs) which were merged into master. For every PR we have the short summary followed by a link to the actual merged PR page. Inside the PR are the detailed changes.
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
+* Anotations starting with **[BC]** indicates breaking change.
 
 ## [new release]
 
 * Introduce Adapters, an abstraction of API specifics so ReduxWPAPI can communicate with any other API client. ([#8](https://github.com/log-oscon/redux-wpapi/pull/8))
+  * **[BC]** Rename `entity` to `resource` for better REST compliance.
+  * **[BC]** Rename Request Statuses for better Promise compliance.
 * Add integration with Travis and adds NPM and Travis badges
 * Implement reducer tests ([#6](https://github.com/log-oscon/redux-wpapi/pull/6))
 * Draft on Contributions and the introduction of this `CHANGELOG.md` file ([#5](https://github.com/log-oscon/redux-wpapi/pull/5))
 * Fix FAILURE handling ([#3](https://github.com/log-oscon/redux-wpapi/pull/3))
-
-#### Breaking Changes
-* Rename `entity` to `resource` for better REST compliance.
-* Rename Request Statuses for better Promise compliance.
 
 ## 0.1.2
 
