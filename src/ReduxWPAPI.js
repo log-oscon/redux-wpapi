@@ -25,7 +25,7 @@ import {
   rejected,
 } from './constants/requestStatus';
 
-const initialReducerState = Immutable.fromJS({
+export const initialReducerState = Immutable.fromJS({
   requestsByName: {},
   requestsByQuery: {},
 
@@ -66,7 +66,6 @@ export default class ReduxWPAPI {
       name: action.payload.name,
       aggregator: this.adapter.getAggregator(this.adapter.getUrl(request)),
       operation: this.adapter.getOperation(request),
-      params: action.payload.params,
       requestAt: Date.now(),
     };
 
@@ -93,7 +92,6 @@ export default class ReduxWPAPI {
         cache = state.getIn(['requestsByQuery', payload.cacheID, payload.page]);
         data = state.get('data');
       }
-
       if (cache && (localID || (isUndefined(localID) && !cache.get('error')))) {
         lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
         next({

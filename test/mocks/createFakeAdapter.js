@@ -7,7 +7,8 @@ export default (actionTarget, override) => {
 
     getUrl() { return ''; }
     getIndexes() { return {}; }
-    buildRequest() { return Promise.resolve(); }
+    buildRequest() { return {}; }
+    sendRequest() { return Promise.resolve(actionTarget.payload.response); }
   }
 
   Object.assign(Adapter.prototype, override);

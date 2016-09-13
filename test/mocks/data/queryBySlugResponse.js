@@ -32,7 +32,7 @@ const queryBySlugResponse = [
 
 queryBySlugResponse._paging = {
   total: 1,
-  totalPages: 2,
+  totalPages: 1,
 };
 
 export default queryBySlugResponse;
