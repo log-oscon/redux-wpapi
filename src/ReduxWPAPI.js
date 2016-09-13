@@ -107,7 +107,11 @@ export default class ReduxWPAPI {
           },
         });
 
-        let ttl = this.adapter.getTTL(request);
+        let ttl;
+        if (this.adapter.getTTL) {
+          ttl = this.adapter.getTTL(request);
+        }
+
         if (ttl !== 0 && !ttl) {
           ttl = this.settings.ttl;
         }
@@ -322,18 +326,25 @@ export default class ReduxWPAPI {
       localID = newState.get('resources').size;
     }
 
-    newState = newState.setIn(
-      ['resources', localID],
-      this.settings.transformResource(this.adapter.transformResource({
-        ...oldState,
-        ...resource,
-        _links,
-        _embedded,
-        lastCacheUpdate: meta.lastCacheUpdate,
-      }))
-    );
+    let resourceTransformed = {
+      ...oldState,
+      ...resource,
+      _links,
+      _embedded,
+      lastCacheUpdate: meta.lastCacheUpdate,
+    };
 
+    if (this.adapter.transformResource) {
+      resourceTransformed = this.adapter.transformResource(resourceTransformed);
+    }
+
+    if (this.settings.transformResource) {
+      resourceTransformed = this.settings.transformResource(resourceTransformed);
+    }
+
+    newState = newState.setIn(['resources', localID], resourceTransformed);
     const indexers = this.settings.customCacheIndexes[aggregator];
+
     forEach(isArray(indexers) ? ['id'].concat(indexers) : ['id', indexers], indexer => {
       if (!isUndefined(resource[indexer])) {
         newState = newState.setIn(

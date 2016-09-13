@@ -1,12 +1,13 @@
-import { REDUX_WP_API_FAILURE } from '../../src/constants/actions';
+import { REDUX_WP_API_SUCCESS } from '../../../src/constants/actions';
+import queryBySlugResponse from '../data/queryBySlugResponse';
 
 export default {
-  type: REDUX_WP_API_FAILURE,
+  type: REDUX_WP_API_SUCCESS,
   payload: {
     cacheID: '/namespace/any?slug=dumb2',
     page: 1,
+    response: queryBySlugResponse,
   },
-  error: new Error('Network Failure'),
   meta: {
     name: 'test',
     aggregator: 'any',

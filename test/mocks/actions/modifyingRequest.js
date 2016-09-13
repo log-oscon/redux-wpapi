@@ -1,4 +1,4 @@
-import { REDUX_WP_API_REQUEST } from '../../src/constants/actions';
+import { REDUX_WP_API_REQUEST } from '../../../src/constants/actions';
 
 export default {
   type: REDUX_WP_API_REQUEST,

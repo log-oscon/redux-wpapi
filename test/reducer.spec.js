@@ -1,26 +1,26 @@
 import { describe, it } from 'mocha';
 import expect from 'expect';
-import WPAPI from 'wpapi';
 import Immutable from 'immutable';
 import ReduxWPAPI from '../src/index.js';
 import { pending, resolved, rejected } from '../src/constants/requestStatus';
 
-import collectionRequest from './mocked-actions/collectionRequest';
-import modifyingRequest from './mocked-actions/modifyingRequest';
-import successfulCollectionRequest from './mocked-actions/successfulCollectionRequest';
-import successfullQueryBySlug from './mocked-actions/successfullQueryBySlug';
-import unsuccessfulCollectionRequest from './mocked-actions/unsuccessfulCollectionRequest';
-import unsuccessfulModifyingRequest from './mocked-actions/unsuccessfulModifyingRequest';
-import cacheHitSingle from './mocked-actions/cacheHitSingle';
-import cacheHitCollection from './mocked-actions/cacheHitCollection';
+import collectionRequest from './mocks/actions/collectionRequest';
+import modifyingRequest from './mocks/actions/modifyingRequest';
+import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
+import successfullQueryBySlug from './mocks/actions/successfullQueryBySlug';
+import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
+import unsuccessfulModifyingRequest from './mocks/actions/unsuccessfulModifyingRequest';
+import cacheHitSingle from './mocks/actions/cacheHitSingle';
+import cacheHitCollection from './mocks/actions/cacheHitCollection';
+import AdapterMockForReducer from './mocks/AdapterMockForReducer';
 
 describe('Reducer', () => {
-  const modifingOperations = ['create', 'update', 'delete'];
+  const modifyingOperations = ['create', 'update', 'delete'];
   let reducer;
 
   beforeEach(() => {
     reducer = new ReduxWPAPI({
-      api: new WPAPI({ endpoint: 'http://dumb.url/wp-json/' }),
+      adapter: new AdapterMockForReducer(),
       customCacheIndexes: {
         any: 'slug',
       },
@@ -86,7 +86,7 @@ describe('Reducer', () => {
       });
     });
 
-    modifingOperations
+    modifyingOperations
     .forEach(type =>
       describe(`on operation ${type.toUpperCase()}`, () => {
         const request = { ...modifyingRequest, meta: { ...modifyingRequest.meta, type } };
@@ -190,7 +190,7 @@ describe('Reducer', () => {
       });
     });
 
-    modifingOperations.forEach(type =>
+    modifyingOperations.forEach(type =>
       describe(`on ${type} operation`, () => {
         const response = {
           ...unsuccessfulModifyingRequest,
