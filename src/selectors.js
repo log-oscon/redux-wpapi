@@ -2,22 +2,22 @@ import { createSelector } from 'reselect';
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
 
-export const denormalize = (entities, id, memoized = {}) => {
+export const denormalize = (resources, id, memoized = {}) => {
   /* eslint-disable no-param-reassign, no-underscore-dangle */
   if (memoized[id]) return memoized[id];
 
-  const entity = entities.get(id);
+  const resource = resources.get(id);
   memoized[id] = {
-    ...entity,
-    ...mapDeep(entity._embedded || {},
-      embeddedId => denormalize(entities, embeddedId, memoized)
+    ...resource,
+    ...mapDeep(resource._embedded || {},
+      embeddedId => denormalize(resources, embeddedId, memoized)
     ),
   };
 
   return memoized[id];
 };
 
-export const localEntities = state => state.wp.getIn(['entities']);
+export const localresources = state => state.wp.getIn(['resources']);
 
 export const selectQuery = name => createSelector(
   createSelector(
@@ -38,8 +38,8 @@ export const selectQuery = name => createSelector(
       return currentRequest;
     }
   ),
-  localEntities,
-  (request, entities) => {
+  localresources,
+  (request, resources) => {
     if (!request) {
       return {
         status: pending,
@@ -65,7 +65,7 @@ export const selectQuery = name => createSelector(
     return request.set(
       'data',
       request.get('operation') === 'get' ?
-        data.map(id => denormalize(entities, id, memo)) :
+        data.map(id => denormalize(resources, id, memo)) :
         data
     ).toJSON();
   }
