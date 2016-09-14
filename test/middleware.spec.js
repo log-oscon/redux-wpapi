@@ -7,6 +7,7 @@ import Immutable from 'immutable';
 
 import collectionRequest from './mocks/actions/collectionRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
+import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
 import successfullQueryBySlug from './mocks/actions/successfullQueryBySlug';
 import { createFakeStore } from './mocks/store';
 import { initialReducerState } from '../src/ReduxWPAPI';
@@ -136,6 +137,44 @@ describe('Middleware', () => {
     return result.then(() => {
       expect(dispatched.length).toBe(1);
       expect(dispatched[0].type).toBe(REDUX_WP_API_CACHE_HIT);
+    });
+  });
+
+  it('should dispatch REQUEST and FAILURE action when request is not cached and fails', () => {
+    const { middleware } = new ReduxWPAPI({
+      adapter: createFakeAdapter(unsuccessfulCollectionRequest, {
+        sendRequest: () => Promise.reject(unsuccessfulCollectionRequest.error),
+      }),
+    });
+
+    const dispatched = [];
+    const fakeNext = dispatch => dispatched.push(dispatch);
+    const action = createCallAPIActionFrom(unsuccessfulCollectionRequest);
+
+    const result = middleware(createFakeStore())(fakeNext)(action);
+    expect(result).toBeA(Promise);
+
+    return result.then(() => {
+      expect(dispatched.length).toBe(2);
+      expect(dispatched[0]).toEqual({
+        ...collectionRequest,
+        payload: {
+          ...collectionRequest.payload,
+          cacheID: unsuccessfulCollectionRequest.payload.cacheID,
+        },
+        meta: {
+          ...collectionRequest.meta,
+          requestAt: dispatched[0].meta.requestAt,
+        },
+      });
+      expect(dispatched[1]).toEqual({
+        ...unsuccessfulCollectionRequest,
+        meta: {
+          ...unsuccessfulCollectionRequest.meta,
+          requestAt: dispatched[1].meta.requestAt,
+          responseAt: dispatched[1].meta.responseAt,
+        },
+      });
     });
   });
 });
