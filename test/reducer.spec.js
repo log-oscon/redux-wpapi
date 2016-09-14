@@ -152,7 +152,7 @@ describe('Reducer', () => {
       .toBe(successfulCollectionRequest.payload.response[1].link);
     });
 
-    it('should persist locally each found entity exactly once', () => {
+    it('should persist locally each found resource exactly once', () => {
       const state = reducer(undefined, successfulCollectionRequest);
       const resources = state.get('resources');
       expect(resources.size).toBe(4);
@@ -163,13 +163,13 @@ describe('Reducer', () => {
       .toInclude(successfulCollectionRequest.payload.response[0].link);
     });
 
-    it('should update previous entity\'s state', () => {
+    it('should update previous resource\'s state', () => {
       const previous = reducer(undefined, successfulCollectionRequest);
       const state = reducer(previous, successfullQueryBySlug);
       const queryState = state.getIn(['requestsByQuery', successfullQueryBySlug.payload.cacheID]);
       const [id] = queryState.getIn([1, 'data']);
-      const entity = state.getIn(['resources', id]);
-      expect(entity).toContain({
+      const resource = state.getIn(['resources', id]);
+      expect(resource).toContain({
         link: successfullQueryBySlug.payload.response[0].link,
       });
     });
