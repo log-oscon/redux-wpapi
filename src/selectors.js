@@ -63,10 +63,7 @@ export const selectQuery = name => createSelector(
     }
 
     return request.set(
-      'data',
-      request.get('operation') === 'get' ?
-        data.map(id => denormalize(resources, id, memo)) :
-        data
+      'data', data.map(id => denormalize(resources, id, memo))
     ).toJSON();
   }
 );

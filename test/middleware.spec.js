@@ -1,9 +1,10 @@
 import { describe, it } from 'mocha';
 import expect from 'expect';
-import ReduxWPAPI from '../src/index.js';
-import createFakeAdapter from './mocks/createFakeAdapter';
 import noop from 'lodash/noop';
 import Immutable from 'immutable';
+
+import ReduxWPAPI from '../src/index.js';
+import createFakeAdapter from './mocks/createFakeAdapter';
 
 import collectionRequest from './mocks/actions/collectionRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
@@ -11,8 +12,8 @@ import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectio
 import successfullQueryBySlug from './mocks/actions/successfullQueryBySlug';
 import { createFakeStore } from './mocks/store';
 import { initialReducerState } from '../src/ReduxWPAPI';
-
 import { REDUX_WP_API_CALL, REDUX_WP_API_CACHE_HIT } from '../src/constants/actions';
+import { resolved, rejected } from '../src/constants/requestStatus';
 
 const createCallAPIActionFrom = ({
   meta: { name },
@@ -26,6 +27,44 @@ const createCallAPIActionFrom = ({
     aditionalParams: !Array.isArray(response) ? response : {},
   },
 });
+
+const successfullQueryBySlugState = initialReducerState.set(
+  'resources',
+  new Immutable.List([
+    {
+      ...successfullQueryBySlug.payload.response[0]._embedded.author[0],
+      lastCacheUpdate: Date.now() },
+    {
+      ...successfullQueryBySlug.payload.response[0],
+      lastCacheUpdate: Date.now(),
+      _embedded: { author: 0 },
+    },
+  ])
+)
+.set(
+  'resourcesIndexes',
+  Immutable.fromJS({
+    any: {
+      slug: { 'dumb1-modified': 1 },
+      id: { 1: 1 },
+    },
+  })
+)
+.mergeIn(
+  ['requestsByName', successfullQueryBySlug.meta.name],
+  {
+    cacheID: successfullQueryBySlug.payload.cacheID,
+    page: successfullQueryBySlug.payload.page,
+  }
+)
+.mergeIn(
+  ['requestsByQuery', successfullQueryBySlug.payload.cacheID, successfullQueryBySlug.payload.page],
+  {
+    status: resolved,
+    error: false,
+    data: [0],
+  }
+);
 
 describe('Middleware', () => {
   it('should implement middleware signature (store => next => action =>)', () => {
@@ -63,8 +102,8 @@ describe('Middleware', () => {
 
     const dispatched = [];
     const fakeNext = dispatch => dispatched.push(dispatch);
-    const action = createCallAPIActionFrom(successfulCollectionRequest);
 
+    const action = createCallAPIActionFrom(successfulCollectionRequest);
     const result = middleware(createFakeStore())(fakeNext)(action);
     expect(result).toBeA(Promise);
 
@@ -104,33 +143,8 @@ describe('Middleware', () => {
     const fakeNext = dispatch => dispatched.push(dispatch) && nextMiddlewareReturn;
     const action = createCallAPIActionFrom(successfullQueryBySlug);
 
-    const any = successfullQueryBySlug.payload.response[0];
-    const author = any._embedded.author[0];
-
     // CACHED STATE
-    const fakeStore = createFakeStore({
-      wp: initialReducerState.set(
-        'resources',
-        new Immutable.List([
-          { ...author, lastCacheUpdate: Date.now() },
-          {
-            ...any,
-            lastCacheUpdate: Date.now(),
-            _embedded: { author: 0 },
-          },
-        ])
-      )
-      .set(
-        'resourcesIndexes',
-        Immutable.fromJS({
-          any: {
-            slug: { 'dumb1-modified': 1 },
-            id: { 1: 1 },
-          },
-        })
-      ),
-    });
-
+    const fakeStore = createFakeStore({ wp: successfullQueryBySlugState });
     const result = middleware(fakeStore)(fakeNext)(action);
     expect(result).toBeA(Promise);
 
@@ -174,6 +188,75 @@ describe('Middleware', () => {
           requestAt: dispatched[1].meta.requestAt,
           responseAt: dispatched[1].meta.responseAt,
         },
+      });
+    });
+  });
+
+  it('should return a promise that resolves to selectQuery result', () => {
+    const { middleware } = new ReduxWPAPI({
+      adapter: createFakeAdapter(successfulCollectionRequest),
+    });
+
+    const dispatched = [];
+    const store = createFakeStore();
+    const fakeNext = dispatch => {
+      dispatched.push(dispatch);
+      store.state = { wp: successfullQueryBySlugState };
+    };
+    const action = createCallAPIActionFrom(successfulCollectionRequest);
+    const result = middleware(store)(fakeNext)(action);
+    expect(result).toBeA(Promise);
+
+    return result.then(response => {
+      expect(response)
+      .toInclude({
+        status: resolved,
+        error: false,
+      });
+      expect(response.data).toBeA('array');
+      expect(response.data.length).toBe(1);
+      expect(response.data[0]).toBeAn('object');
+    });
+  });
+
+  it('should return a promise that reject to selectQuery result', () => {
+    const { middleware } = new ReduxWPAPI({
+      adapter: createFakeAdapter(unsuccessfulCollectionRequest, {
+        sendRequest: () => Promise.reject(unsuccessfulCollectionRequest.error),
+      }),
+    });
+
+    const dispatched = [];
+    const store = createFakeStore();
+    const { name } = unsuccessfulCollectionRequest.meta;
+    const { page, cacheID } = unsuccessfulCollectionRequest.payload;
+    const fakeNext = dispatch => {
+      dispatched.push(dispatch);
+      store.state = {
+        wp: initialReducerState.mergeIn(
+          ['requestsByQuery', cacheID, page],
+          {
+            status: rejected,
+            data: false,
+            error: unsuccessfulCollectionRequest.error,
+          }
+        )
+        .mergeIn(
+          ['requestsByName', name],
+          { cacheID, page }
+        ),
+      };
+    };
+    const action = createCallAPIActionFrom(successfulCollectionRequest);
+    const result = middleware(store)(fakeNext)(action);
+    expect(result).toBeA(Promise);
+
+    return result.then(response => {
+      expect(response)
+      .toInclude({
+        status: rejected,
+        data: false,
+        error: unsuccessfulCollectionRequest.error,
       });
     });
   });

@@ -19,11 +19,11 @@ const collectionResponse = [
       author: [{
         id: 1,
         name: 'admin',
-        link: 'http://km.nos.dev/author/admin/',
+        link: 'http://dumb.url/wp-json/author/admin/',
         slug: 'admin',
         _links: {
-          self: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users/1' }],
-          collection: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users' }],
+          self: [{ href: 'http://dumb.url/wp-json/wp/v2/users/1' }],
+          collection: [{ href: 'http://dumb.url/wp-json/wp/v2/users' }],
         },
       }],
       parent: [{
@@ -65,11 +65,11 @@ const collectionResponse = [
       author: [{
         id: 2,
         name: 'edygar',
-        link: 'http://km.nos.dev/author/edygar/',
+        link: 'http://dumb.url/wp-json/author/edygar/',
         slug: 'edygar',
         _links: {
-          self: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users/2' }],
-          collection: [{ href: 'http://km.nos.dev/wp-json/wp/v2/users' }],
+          self: [{ href: 'http://dumb.url/wp-json/wp/v2/users/2' }],
+          collection: [{ href: 'http://dumb.url/wp-json/wp/v2/users' }],
         },
       }],
     },

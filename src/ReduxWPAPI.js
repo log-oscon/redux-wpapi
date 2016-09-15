@@ -116,7 +116,7 @@ export default class ReduxWPAPI {
 
         if (Date.now() - lastCacheUpdate < ttl) {
           return Promise.resolve(
-            store.getState().wp.getIn(['requestsByName', meta.name])
+            selectQuery(meta.name)(store.getState())
           );
         }
       }
@@ -128,23 +128,25 @@ export default class ReduxWPAPI {
       meta,
     });
 
-    return this.adapter.sendRequest(request)
-    .then(
-      response =>
-        next({
-          type: REDUX_WP_API_SUCCESS,
-          payload: { ...payload, response },
-          meta: { ...meta, responseAt: Date.now() },
-        }),
-      error =>
-        next({
-          type: REDUX_WP_API_FAILURE,
-          payload,
-          error,
-          meta: { ...meta, responseAt: Date.now() },
-        })
-    )
-    .then(() => selectQuery(meta.name)(store.getState()));
+    return (
+      this.adapter.sendRequest(request)
+      .then(
+        response =>
+          next({
+            type: REDUX_WP_API_SUCCESS,
+            payload: { ...payload, response },
+            meta: { ...meta, responseAt: Date.now() },
+          }),
+        error =>
+          next({
+            type: REDUX_WP_API_FAILURE,
+            payload,
+            error,
+            meta: { ...meta, responseAt: Date.now() },
+          })
+      )
+      .then(() => selectQuery(meta.name)(store.getState()))
+    );
   }
 
   reducer = (state = initialReducerState, action) => {
