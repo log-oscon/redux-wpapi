@@ -94,7 +94,11 @@ export default class ReduxWPAPI {
         data = state.get('data');
       }
       if (cache && (localID || (isUndefined(localID) && !cache.get('error')))) {
-        lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
+        try {
+          lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
+        } catch (e) {
+          console.log(cache); // eslint-disable-line
+        }
         next({
           meta,
           type: REDUX_WP_API_CACHE_HIT,
