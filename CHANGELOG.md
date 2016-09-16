@@ -10,7 +10,7 @@ Some guidelines in reading this document:
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
 * Annotations starting with **[BC]** indicates breaking change.
 
-## 1.0.2 [UNRELEASED]
+## [new release]
 
 * Fix the Promise return from middleware dispatch, which should always resolve to selectQuery result
 
