@@ -2,10 +2,11 @@ import { describe, it } from 'mocha';
 import expect from 'expect';
 import Immutable from 'immutable';
 import { initialReducerState } from '../src/ReduxWPAPI';
-import { selectQuery } from '../src/selectors';
+import { selectQuery, withDenormalize } from '../src/selectors';
 import { pending, resolved } from '../src/constants/requestStatus';
+import { createSelector } from 'reselect';
 
-describe('Selector', () => {
+describe('Selector selectQuery', () => {
   it('should return a Request for empty state', () => {
     const state = { wp: initialReducerState };
     expect(selectQuery('test')(state))
@@ -141,3 +142,31 @@ describe('Selector', () => {
   });
 });
 
+
+describe('withDenormalize', () => {
+  it('should allow consumers to denormalize resources by local ids within selector', () => {
+    const resources = [
+      { id: 1,
+        title: 'lol',
+        _links: { parent: { url: 'http://dumb.com/test/2' } },
+        _embedded: { parent: 1 },
+      },
+      { id: 2, title: 'lol 2' },
+    ];
+    const storeState = {
+      wp: (
+        initialReducerState
+        .setIn(['resources'], new Immutable.List(resources))
+      ),
+    };
+
+    const selector = withDenormalize(
+      createSelector(
+        () => 1,
+        (id, denormalize) => denormalize(id)
+      )
+    );
+    const selectedState = selector(storeState);
+    expect(selectedState).toInclude(resources[1]);
+  });
+});

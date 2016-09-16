@@ -21,6 +21,16 @@ export const denormalize = (resources, id, memoized = {}) => {
 
 export const localResources = state => state.wp.getIn(['resources']);
 
+export const withDenormalize = injectTo =>
+  createSelector(
+    (...args) => args,
+    localResources,
+    ([state, props], resources) => {
+      const memo = {};
+      return injectTo(id => denormalize(resources, id, memo))(state, props);
+    }
+  );
+
 export const selectQuery = name => createSelector(
   createSelector(
     state => state.wp.getIn(['requestsByName', name]),
