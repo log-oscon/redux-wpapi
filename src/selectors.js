@@ -1,6 +1,7 @@
 import { createSelector } from 'reselect';
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
+import { id as idSymbol } from './constants/symbols';
 
 export const denormalize = (resources, id, memoized = {}) => {
   /* eslint-disable no-param-reassign, no-underscore-dangle */
@@ -8,6 +9,7 @@ export const denormalize = (resources, id, memoized = {}) => {
 
   const resource = resources.get(id);
   memoized[id] = {
+    [idSymbol]: id,
     ...resource,
     ...mapDeep(resource._embedded || {},
       embeddedId => denormalize(resources, embeddedId, memoized)

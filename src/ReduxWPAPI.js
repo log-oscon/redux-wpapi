@@ -10,6 +10,7 @@ import isArray from 'lodash/isArray';
 import isUndefined from 'lodash/isUndefined';
 import { selectQuery } from './selectors';
 import WPAPIAdapter from './adapters/wpapi';
+import { lastCacheUpdate as lastCacheUpdateSymbol } from './constants/symbols';
 
 import {
   REDUX_WP_API_CALL,
@@ -87,7 +88,7 @@ export default class ReduxWPAPI {
       }
 
       if (cache) {
-        lastCacheUpdate = cache.lastCacheUpdate;
+        lastCacheUpdate = cache[lastCacheUpdateSymbol];
       } else {
         cache = state.getIn(['requestsByQuery', payload.cacheID, payload.page]);
         data = state.get('data');
@@ -221,7 +222,7 @@ export default class ReduxWPAPI {
         }
 
         const data = [];
-        const aditionalData = { lastCacheUpdate: requestState.responseAt };
+        const aditionalData = { [lastCacheUpdateSymbol]: requestState.responseAt };
 
         body.forEach(resource => {
           newState = this.indexResource(newState, aggregator, resource, aditionalData);
@@ -329,9 +330,9 @@ export default class ReduxWPAPI {
     let resourceTransformed = {
       ...oldState,
       ...resource,
+      ...meta,
       _links,
       _embedded,
-      lastCacheUpdate: meta.lastCacheUpdate,
     };
 
     if (this.adapter.transformResource) {
