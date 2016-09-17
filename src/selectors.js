@@ -2,6 +2,7 @@ import { createSelector } from 'reselect';
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
 import { id as idSymbol } from './constants/symbols';
+import isFunction from 'lodash/isFunction';
 
 export const denormalize = (resources, id, memoized = {}) => {
   /* eslint-disable no-param-reassign, no-underscore-dangle */
@@ -21,13 +22,17 @@ export const denormalize = (resources, id, memoized = {}) => {
 
 export const localResources = state => state.wp.getIn(['resources']);
 
-export const withDenormalize = injectTo =>
+export const withDenormalize = thunk =>
   createSelector(
-    (...args) => args,
     localResources,
-    ([state, props], resources) => {
+    thunk,
+    (resources, target) => {
+      if (!isFunction(target)) {
+        return target;
+      }
+
       const memo = {};
-      return injectTo(id => denormalize(resources, id, memo))(state, props);
+      return target(id => denormalize(resources, id, memo));
     }
   );
 

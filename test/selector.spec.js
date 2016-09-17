@@ -163,7 +163,7 @@ describe('withDenormalize', () => {
     const selector = withDenormalize(
       createSelector(
         () => 1,
-        (id, denormalize) => denormalize(id)
+        id => denormalize => denormalize(id)
       )
     );
     const selectedState = selector(storeState);
