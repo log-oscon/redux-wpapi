@@ -221,10 +221,10 @@ export default class ReduxWPAPI {
         }
 
         const data = [];
-        const aditionalData = { lastCacheUpdate: requestState.responseAt };
+        const additionalData = { lastCacheUpdate: requestState.responseAt };
 
         body.forEach(resource => {
-          newState = this.indexResource(newState, aggregator, resource, aditionalData);
+          newState = this.indexResource(newState, aggregator, resource, additionalData);
           data.push(this.getResourceLocalID(newState, aggregator, resource));
         });
 

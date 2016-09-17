@@ -9,7 +9,7 @@ import createFakeAdapter from './mocks/createFakeAdapter';
 import collectionRequest from './mocks/actions/collectionRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
 import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
-import successfullQueryBySlug from './mocks/actions/successfullQueryBySlug';
+import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
 import { createFakeStore } from './mocks/store';
 import { initialReducerState } from '../src/ReduxWPAPI';
 import { REDUX_WP_API_CALL, REDUX_WP_API_CACHE_HIT } from '../src/constants/actions';
@@ -24,18 +24,18 @@ const createCallAPIActionFrom = ({
   payload: {
     name,
     request: { cacheID, page },
-    aditionalParams: !Array.isArray(response) ? response : {},
+    additionalParams: !Array.isArray(response) ? response : {},
   },
 });
 
-const successfullQueryBySlugState = initialReducerState.set(
+const successfulQueryBySlugState = initialReducerState.set(
   'resources',
   new Immutable.List([
     {
-      ...successfullQueryBySlug.payload.response[0]._embedded.author[0],
+      ...successfulQueryBySlug.payload.response[0]._embedded.author[0],
       lastCacheUpdate: Date.now() },
     {
-      ...successfullQueryBySlug.payload.response[0],
+      ...successfulQueryBySlug.payload.response[0],
       lastCacheUpdate: Date.now(),
       _embedded: { author: 0 },
     },
@@ -51,14 +51,14 @@ const successfullQueryBySlugState = initialReducerState.set(
   })
 )
 .mergeIn(
-  ['requestsByName', successfullQueryBySlug.meta.name],
+  ['requestsByName', successfulQueryBySlug.meta.name],
   {
-    cacheID: successfullQueryBySlug.payload.cacheID,
-    page: successfullQueryBySlug.payload.page,
+    cacheID: successfulQueryBySlug.payload.cacheID,
+    page: successfulQueryBySlug.payload.page,
   }
 )
 .mergeIn(
-  ['requestsByQuery', successfullQueryBySlug.payload.cacheID, successfullQueryBySlug.payload.page],
+  ['requestsByQuery', successfulQueryBySlug.payload.cacheID, successfulQueryBySlug.payload.page],
   {
     status: resolved,
     error: false,
@@ -129,7 +129,7 @@ describe('Middleware', () => {
 
   it('should dispatch only CACHE_HIT action when request is cached within TTL', () => {
     const { middleware } = new ReduxWPAPI({
-      adapter: createFakeAdapter(successfullQueryBySlug, {
+      adapter: createFakeAdapter(successfulQueryBySlug, {
         getTTL() { return Infinity; },
         getIndexes() { return { slug: 'dumb1-modified' }; },
       }),
@@ -141,10 +141,10 @@ describe('Middleware', () => {
     const dispatched = [];
     const nextMiddlewareReturn = Symbol();
     const fakeNext = dispatch => dispatched.push(dispatch) && nextMiddlewareReturn;
-    const action = createCallAPIActionFrom(successfullQueryBySlug);
+    const action = createCallAPIActionFrom(successfulQueryBySlug);
 
     // CACHED STATE
-    const fakeStore = createFakeStore({ wp: successfullQueryBySlugState });
+    const fakeStore = createFakeStore({ wp: successfulQueryBySlugState });
     const result = middleware(fakeStore)(fakeNext)(action);
     expect(result).toBeA(Promise);
 
@@ -201,7 +201,7 @@ describe('Middleware', () => {
     const store = createFakeStore();
     const fakeNext = dispatch => {
       dispatched.push(dispatch);
-      store.state = { wp: successfullQueryBySlugState };
+      store.state = { wp: successfulQueryBySlugState };
     };
     const action = createCallAPIActionFrom(successfulCollectionRequest);
     const result = middleware(store)(fakeNext)(action);
