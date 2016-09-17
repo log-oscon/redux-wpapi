@@ -7,7 +7,7 @@ import { pending, resolved, rejected } from '../src/constants/requestStatus';
 import collectionRequest from './mocks/actions/collectionRequest';
 import modifyingRequest from './mocks/actions/modifyingRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
-import successfullQueryBySlug from './mocks/actions/successfullQueryBySlug';
+import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
 import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
 import unsuccessfulModifyingRequest from './mocks/actions/unsuccessfulModifyingRequest';
 import cacheHitSingle from './mocks/actions/cacheHitSingle';
@@ -165,12 +165,12 @@ describe('Reducer', () => {
 
     it('should update previous resource\'s state', () => {
       const previous = reducer(undefined, successfulCollectionRequest);
-      const state = reducer(previous, successfullQueryBySlug);
-      const queryState = state.getIn(['requestsByQuery', successfullQueryBySlug.payload.cacheID]);
+      const state = reducer(previous, successfulQueryBySlug);
+      const queryState = state.getIn(['requestsByQuery', successfulQueryBySlug.payload.cacheID]);
       const [id] = queryState.getIn([1, 'data']);
       const resource = state.getIn(['resources', id]);
       expect(resource).toContain({
-        link: successfullQueryBySlug.payload.response[0].link,
+        link: successfulQueryBySlug.payload.response[0].link,
       });
     });
   });

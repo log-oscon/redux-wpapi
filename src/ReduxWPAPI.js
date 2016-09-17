@@ -94,11 +94,7 @@ export default class ReduxWPAPI {
         data = state.get('data');
       }
       if (cache && (localID || (isUndefined(localID) && !cache.get('error')))) {
-        try {
-          lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
-        } catch (e) {
-          console.log(cache); // eslint-disable-line
-        }
+        lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
         next({
           meta,
           type: REDUX_WP_API_CACHE_HIT,
@@ -226,10 +222,10 @@ export default class ReduxWPAPI {
         }
 
         const data = [];
-        const aditionalData = { [lastCacheUpdateSymbol]: requestState.responseAt };
+        const additionalData = { lastCacheUpdate: requestState.responseAt };
 
         body.forEach(resource => {
-          newState = this.indexResource(newState, aggregator, resource, aditionalData);
+          newState = this.indexResource(newState, aggregator, resource, additionalData);
           data.push(this.getResourceLocalID(newState, aggregator, resource));
         });
 
