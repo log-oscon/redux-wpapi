@@ -1,10 +1,11 @@
 import { describe, it } from 'mocha';
 import expect from 'expect';
 import Immutable from 'immutable';
+import { createSelector } from 'reselect';
+
 import { initialReducerState } from '../src/ReduxWPAPI';
 import { selectQuery, withDenormalize } from '../src/selectors';
 import { pending, resolved } from '../src/constants/requestStatus';
-import { createSelector } from 'reselect';
 
 describe('Selector selectQuery', () => {
   it('should return a Request for empty state', () => {
