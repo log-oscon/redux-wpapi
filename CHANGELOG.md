@@ -12,6 +12,7 @@ Some guidelines in reading this document:
 
 ## [new release]
 
+* Expose a denormalization mechanism so consumer can transform local ids into resources denormalized
 * Fix the Promise return from middleware dispatch, which should always resolve to selectQuery result
 
 ## 1.0.1
