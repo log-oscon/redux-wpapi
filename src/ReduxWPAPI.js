@@ -10,7 +10,7 @@ import isArray from 'lodash/isArray';
 import isUndefined from 'lodash/isUndefined';
 import { selectQuery } from './selectors';
 import WPAPIAdapter from './adapters/wpapi';
-import { lastCacheUpdate as lastCacheUpdateSymbol } from './constants/symbols';
+import { lastCacheUpdate as lastCacheUpdateSymbol } from './symbols';
 
 import {
   REDUX_WP_API_CALL,

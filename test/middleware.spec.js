@@ -14,7 +14,7 @@ import { createFakeStore } from './mocks/store';
 import { initialReducerState } from '../src/ReduxWPAPI';
 import { REDUX_WP_API_CALL, REDUX_WP_API_CACHE_HIT } from '../src/constants/actions';
 import { resolved, rejected } from '../src/constants/requestStatus';
-import { lastCacheUpdate as lastCacheUpdateSymbol } from '../src/constants/symbols';
+import { lastCacheUpdate as lastCacheUpdateSymbol } from '../src/symbols';
 
 const createCallAPIActionFrom = ({
   meta: { name },

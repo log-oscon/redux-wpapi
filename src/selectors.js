@@ -1,7 +1,7 @@
 import { createSelector } from 'reselect';
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
-import { id as idSymbol } from './constants/symbols';
+import { id as idSymbol } from './symbols';
 import isFunction from 'lodash/isFunction';
 
 export const denormalize = (resources, id, memoized = {}) => {
