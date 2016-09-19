@@ -12,7 +12,7 @@ Some guidelines in reading this document:
 
 ## [new release]
 
-* Fix the Promise return from middleware dispatch, which should always resolve to selectQuery result
+* Fix the Promise return from middleware dispatch, which should always resolve to `selectQuery` result ([#9](https://github.com/log-oscon/redux-wpapi/pull/9))
 
 ## 1.0.1
 

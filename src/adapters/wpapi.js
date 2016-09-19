@@ -269,12 +269,12 @@ export default class WPAPIAdapter {
    * fetched. The request must carry at least operation (get|create|update\delete) and required data
    * in order to call API later at `callAPI`.
    *
-   * @param  {Object} payload                 The action payload
-   * @param  {Object} payload.request         The lib consumer input for calling the api
+   * @param  {Object} payload                  The action payload
+   * @param  {Object} payload.request          The lib consumer input for calling the api
    * @param  {Object} payload.additionalParams additional params in order to make request, generally
-   *                                          meta data such as method or header to be handled by
-   *                                          `callAPI`
-   * @return {Object}                         The Request Object
+   *                                           meta data such as method or header to be handled by
+   *                                           `callAPI`
+   * @return {Object}                          The Request Object
    */
   buildRequest({ request: requestBuilder, additionalParams }) {
     const wpRequest = requestBuilder(this.api);
