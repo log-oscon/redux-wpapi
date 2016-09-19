@@ -10,7 +10,7 @@ Some guidelines in reading this document:
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
 * Annotations starting with **[BC]** indicates breaking change.
 
-## [new release]
+## 1.1.0
 
 * Expose a denormalization mechanism so consumer can transform local ids into resources denormalized ([#11](https://github.com/log-oscon/redux-wpapi/pull/11))
 * Fix the Promise return from middleware dispatch, which should always resolve to `selectQuery` result ([#9](https://github.com/log-oscon/redux-wpapi/pull/9))
