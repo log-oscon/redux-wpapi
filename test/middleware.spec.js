@@ -14,6 +14,7 @@ import { createFakeStore } from './mocks/store';
 import { initialReducerState } from '../src/ReduxWPAPI';
 import { REDUX_WP_API_CALL, REDUX_WP_API_CACHE_HIT } from '../src/constants/actions';
 import { resolved, rejected } from '../src/constants/requestStatus';
+import { lastCacheUpdate as lastCacheUpdateSymbol } from '../src/symbols';
 
 const createCallAPIActionFrom = ({
   meta: { name },
@@ -33,10 +34,10 @@ const successfulQueryBySlugState = initialReducerState.set(
   new Immutable.List([
     {
       ...successfulQueryBySlug.payload.response[0]._embedded.author[0],
-      lastCacheUpdate: Date.now() },
+      [lastCacheUpdateSymbol]: Date.now() },
     {
       ...successfulQueryBySlug.payload.response[0],
-      lastCacheUpdate: Date.now(),
+      [lastCacheUpdateSymbol]: Date.now(),
       _embedded: { author: 0 },
     },
   ])

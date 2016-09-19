@@ -1,13 +1,21 @@
+import isFunction from 'lodash/isFunction';
 import { createSelector } from 'reselect';
+
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
+import { id as idSymbol } from './symbols';
 
 export const denormalize = (resources, id, memoized = {}) => {
   /* eslint-disable no-param-reassign, no-underscore-dangle */
   if (memoized[id]) return memoized[id];
 
   const resource = resources.get(id);
+  if (!resource) {
+    return null;
+  }
+
   memoized[id] = {
+    [idSymbol]: id,
     ...resource,
     ...mapDeep(resource._embedded || {},
       embeddedId => denormalize(resources, embeddedId, memoized)
@@ -18,6 +26,20 @@ export const denormalize = (resources, id, memoized = {}) => {
 };
 
 export const localResources = state => state.wp.getIn(['resources']);
+
+export const withDenormalize = thunk =>
+  createSelector(
+    localResources,
+    thunk,
+    (resources, target) => {
+      if (!isFunction(target)) {
+        return target;
+      }
+
+      const memo = {};
+      return target(id => denormalize(resources, id, memo));
+    }
+  );
 
 export const selectQuery = name => createSelector(
   createSelector(
