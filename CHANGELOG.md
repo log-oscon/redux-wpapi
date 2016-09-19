@@ -13,7 +13,7 @@ Some guidelines in reading this document:
 ## [new release]
 
 * Expose a denormalization mechanism so consumer can transform local ids into resources denormalized
-* Fix the Promise return from middleware dispatch, which should always resolve to selectQuery result
+* Fix the Promise return from middleware dispatch, which should always resolve to `selectQuery` result ([#9](https://github.com/log-oscon/redux-wpapi/pull/9))
 
 ## 1.0.1
 

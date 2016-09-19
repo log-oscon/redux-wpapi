@@ -5,7 +5,7 @@
 A [node-wpapi](https://github.com/WP-API/node-wpapi) integration for a Redux based Application.
 
 ## How it Works
-This library exposes [node-wpapi](https://github.com/WP-API/node-wpapi)  instance through the actionCreator [callAPI](#/src/actions/callAPI.js). The resulting
+This library exposes [node-wpapi](https://github.com/WP-API/node-wpapi) instance through the actionCreator [callAPI](#/src/actions/callAPI.js). The resulting
 action is interpreted in [the middleware](#the-middleware), doing so by resolving the request and controlling the reducer through actions.
 
 ## Installation
