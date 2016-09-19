@@ -1,17 +1,14 @@
-import { REDUX_WP_API_FAILURE } from '../../src/constants/actions';
+import { REDUX_WP_API_FAILURE } from '../../../src/constants/actions';
 
 export default {
   type: REDUX_WP_API_FAILURE,
-  payload: {
-    cacheID: '/namespace/any?slug=dumb2',
-    page: 1,
-  },
+  payload: { /* irrelant */ },
   error: new Error('Network Failure'),
   meta: {
     name: 'test',
     aggregator: 'any',
+    // operation will be injected;
     requestAt: Date.now(),
     responseAt: Date.now(),
-    operation: 'get',
   },
 };

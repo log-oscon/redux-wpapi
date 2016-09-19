@@ -1,8 +1,6 @@
 import { REDUX_WP_API_CALL } from './constants/actions';
 
-export * as types from './constants/actions';
-
-export default (name, request, aditionalParams = {}) => ({
+export default (name, request, additionalParams = {}) => ({
   type: REDUX_WP_API_CALL,
-  payload: { name, request, aditionalParams },
+  payload: { name, request, additionalParams },
 });

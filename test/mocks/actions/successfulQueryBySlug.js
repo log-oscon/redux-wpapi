@@ -1,10 +1,10 @@
-import { REDUX_WP_API_SUCCESS } from '../../src/constants/actions';
+import { REDUX_WP_API_SUCCESS } from '../../../src/constants/actions';
 import queryBySlugResponse from '../data/queryBySlugResponse';
 
 export default {
   type: REDUX_WP_API_SUCCESS,
   payload: {
-    cacheID: '/namespace/any?slug=dumb2',
+    cacheID: '/namespace/any?slug=dumb1-modified',
     page: 1,
     response: queryBySlugResponse,
   },

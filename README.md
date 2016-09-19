@@ -5,7 +5,7 @@
 A [node-wpapi](https://github.com/WP-API/node-wpapi) integration for a Redux based Application.
 
 ## How it Works
-This library exposes [node-wpapi](https://github.com/WP-API/node-wpapi)  instance through the actionCreator [wp](#wp-Action-Creator). The resulting
+This library exposes [node-wpapi](https://github.com/WP-API/node-wpapi) instance through the actionCreator [callAPI](#/src/actions/callAPI.js). The resulting
 action is interpreted in [the middleware](#the-middleware), doing so by resolving the request and controlling the reducer through actions.
 
 ## Installation
@@ -35,16 +35,24 @@ import { wp, selectQuery, ResponseStatus } from 'redux-wpapi';
 import { connect } from 'react-redux';
 
 export class HomePage extends React.Component {
-  componentWillMount() {
-    this.props.wp(
+  static loadData(props) {
+    return props.callAPI(
       // The name where the request state will be placed
       'HomePagePosts',
       // A callback where wpapi instance is injected
       api =>
-        api.posts()
-        .page(this.props.page)
-        .perPage(this.props.perPage)
+      api.posts()
+      .page(props.page)
+      .perPage(props.perPage)
     );
+  }
+
+  componentWillMount() {
+    HomePage.loadData(this.props);
+  }
+
+  componentWillReceiveProps(props) {
+    HomePage.loadData(props);
   }
 
   render() {
@@ -67,7 +75,7 @@ export class HomePage extends React.Component {
 
 export default connect({
   request: selectQuery('HomePagePosts'),
-}, { wp })(HomePage);
+}, { callAPI })(HomePage);
 ```
 
 ## Contributions

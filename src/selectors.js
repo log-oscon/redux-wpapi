@@ -17,7 +17,7 @@ export const denormalize = (resources, id, memoized = {}) => {
   return memoized[id];
 };
 
-export const localresources = state => state.wp.getIn(['resources']);
+export const localResources = state => state.wp.getIn(['resources']);
 
 export const selectQuery = name => createSelector(
   createSelector(
@@ -38,7 +38,7 @@ export const selectQuery = name => createSelector(
       return currentRequest;
     }
   ),
-  localresources,
+  localResources,
   (request, resources) => {
     if (!request) {
       return {
@@ -63,10 +63,7 @@ export const selectQuery = name => createSelector(
     }
 
     return request.set(
-      'data',
-      request.get('operation') === 'get' ?
-        data.map(id => denormalize(resources, id, memo)) :
-        data
+      'data', data.map(id => denormalize(resources, id, memo))
     ).toJSON();
   }
 );

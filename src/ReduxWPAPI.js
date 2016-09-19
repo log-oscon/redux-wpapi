@@ -25,7 +25,7 @@ import {
   rejected,
 } from './constants/requestStatus';
 
-const initialReducerState = Immutable.fromJS({
+export const initialReducerState = Immutable.fromJS({
   requestsByName: {},
   requestsByQuery: {},
 
@@ -66,7 +66,6 @@ export default class ReduxWPAPI {
       name: action.payload.name,
       aggregator: this.adapter.getAggregator(this.adapter.getUrl(request)),
       operation: this.adapter.getOperation(request),
-      params: action.payload.params,
       requestAt: Date.now(),
     };
 
@@ -77,14 +76,14 @@ export default class ReduxWPAPI {
       let data;
       const state = store.getState().wp;
       const indexes = this.adapter.getIndexes(request);
-      const localID = this.getResourceLocalID(state, meta.aggregator, indexes);
+      const resourceLocalID = this.getResourceLocalID(state, meta.aggregator, indexes);
 
       payload.cacheID = this.adapter.generateCacheID(request);
       payload.page = parseInt(this.adapter.getRequestedPage(request) || 1, 10);
 
-      if (localID) {
-        cache = state.getIn(['resources', localID]);
-        data = [localID];
+      if (resourceLocalID) {
+        cache = state.getIn(['resources', resourceLocalID]);
+        data = [resourceLocalID];
       }
 
       if (cache) {
@@ -93,8 +92,7 @@ export default class ReduxWPAPI {
         cache = state.getIn(['requestsByQuery', payload.cacheID, payload.page]);
         data = state.get('data');
       }
-
-      if (cache && (localID || (isUndefined(localID) && !cache.get('error')))) {
+      if (cache && (resourceLocalID || (isUndefined(resourceLocalID) && !cache.get('error')))) {
         lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
         next({
           meta,
@@ -107,14 +105,18 @@ export default class ReduxWPAPI {
           },
         });
 
-        let ttl = this.adapter.getTTL(request);
+        let ttl;
+        if (this.adapter.getTTL) {
+          ttl = this.adapter.getTTL(request);
+        }
+
         if (ttl !== 0 && !ttl) {
           ttl = this.settings.ttl;
         }
 
         if (Date.now() - lastCacheUpdate < ttl) {
           return Promise.resolve(
-            store.getState().wp.getIn(['requestsByName', meta.name])
+            selectQuery(meta.name)(store.getState())
           );
         }
       }
@@ -126,23 +128,25 @@ export default class ReduxWPAPI {
       meta,
     });
 
-    return this.adapter.sendRequest(request)
-    .then(
-      response =>
-        next({
-          type: REDUX_WP_API_SUCCESS,
-          payload: { ...payload, response },
-          meta: { ...meta, responseAt: Date.now() },
-        }),
-      error =>
-        next({
-          type: REDUX_WP_API_FAILURE,
-          payload,
-          error,
-          meta: { ...meta, responseAt: Date.now() },
-        })
-    )
-    .then(() => selectQuery(meta.name)(store.getState()));
+    return (
+      this.adapter.sendRequest(request)
+      .then(
+        response =>
+          next({
+            type: REDUX_WP_API_SUCCESS,
+            payload: { ...payload, response },
+            meta: { ...meta, responseAt: Date.now() },
+          }),
+        error =>
+          next({
+            type: REDUX_WP_API_FAILURE,
+            payload,
+            error,
+            meta: { ...meta, responseAt: Date.now() },
+          })
+      )
+      .then(() => selectQuery(meta.name)(store.getState()))
+    );
   }
 
   reducer = (state = initialReducerState, action) => {
@@ -217,10 +221,10 @@ export default class ReduxWPAPI {
         }
 
         const data = [];
-        const aditionalData = { lastCacheUpdate: requestState.responseAt };
+        const additionalData = { lastCacheUpdate: requestState.responseAt };
 
         body.forEach(resource => {
-          newState = this.indexResource(newState, aggregator, resource, aditionalData);
+          newState = this.indexResource(newState, aggregator, resource, additionalData);
           data.push(this.getResourceLocalID(newState, aggregator, resource));
         });
 
@@ -281,10 +285,10 @@ export default class ReduxWPAPI {
     const _links = this.resolveAliases(resource._links, curies) || {};
     delete _links.curies;
 
-    let localID = this.getResourceLocalID(state, aggregator, resource);
+    let resourceLocalID = this.getResourceLocalID(state, aggregator, resource);
     let oldState = {};
-    if (!isUndefined(localID)) {
-      oldState = newState.getIn(['resources', localID]);
+    if (!isUndefined(resourceLocalID)) {
+      oldState = newState.getIn(['resources', resourceLocalID]);
     }
 
     if (resource._embedded) {
@@ -318,27 +322,34 @@ export default class ReduxWPAPI {
       });
     }
 
-    if (isUndefined(localID)) {
-      localID = newState.get('resources').size;
+    if (isUndefined(resourceLocalID)) {
+      resourceLocalID = newState.get('resources').size;
     }
 
-    newState = newState.setIn(
-      ['resources', localID],
-      this.settings.transformResource(this.adapter.transformResource({
-        ...oldState,
-        ...resource,
-        _links,
-        _embedded,
-        lastCacheUpdate: meta.lastCacheUpdate,
-      }))
-    );
+    let resourceTransformed = {
+      ...oldState,
+      ...resource,
+      _links,
+      _embedded,
+      lastCacheUpdate: meta.lastCacheUpdate,
+    };
 
+    if (this.adapter.transformResource) {
+      resourceTransformed = this.adapter.transformResource(resourceTransformed);
+    }
+
+    if (this.settings.transformResource) {
+      resourceTransformed = this.settings.transformResource(resourceTransformed);
+    }
+
+    newState = newState.setIn(['resources', resourceLocalID], resourceTransformed);
     const indexers = this.settings.customCacheIndexes[aggregator];
+
     forEach(isArray(indexers) ? ['id'].concat(indexers) : ['id', indexers], indexer => {
       if (!isUndefined(resource[indexer])) {
         newState = newState.setIn(
           ['resourcesIndexes', aggregator, indexer, resource[indexer]],
-          localID
+          resourceLocalID
         );
       }
     });

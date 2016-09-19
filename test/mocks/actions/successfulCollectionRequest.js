@@ -1,4 +1,4 @@
-import { REDUX_WP_API_SUCCESS } from '../../src/constants/actions';
+import { REDUX_WP_API_SUCCESS } from '../../../src/constants/actions';
 import collectionResponse from '../data/collectionResponse';
 
 export default {
