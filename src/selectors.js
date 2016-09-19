@@ -10,6 +10,10 @@ export const denormalize = (resources, id, memoized = {}) => {
   if (memoized[id]) return memoized[id];
 
   const resource = resources.get(id);
+  if (!resource) {
+    return null;
+  }
+
   memoized[id] = {
     [idSymbol]: id,
     ...resource,
