@@ -234,7 +234,7 @@ export default class ReduxWPAPI {
         }
 
         const data = [];
-        const additionalData = { lastCacheUpdate: requestState.responseAt };
+        const additionalData = { [lastCacheUpdateSymbol]: requestState.responseAt };
 
         body.forEach(resource => {
           newState = this.indexResource(newState, aggregator, resource, additionalData);
