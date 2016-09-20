@@ -248,8 +248,8 @@ export default class WPAPIAdapter {
    * @param  {Object} request Request provided by consumer through action `request` param
    * @return {Number}         The time to live of request's resources
    */
-  getTTL() {
-    return this.defaultTTL;
+  getTTL(request) {
+    return request.ttl || this.defaultTTL;
   }
 
   /**
@@ -278,9 +278,9 @@ export default class WPAPIAdapter {
    */
   buildRequest({ request: requestBuilder, additionalParams }) {
     const wpRequest = requestBuilder(this.api);
-    const { operation = 'get', ...body } = additionalParams;
+    const { operation = 'get', ...body, ttl } = additionalParams;
 
-    return { wpRequest, operation, body };
+    return { wpRequest, operation, body, ttl };
   }
 
   /**
