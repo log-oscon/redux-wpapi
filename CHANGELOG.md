@@ -13,8 +13,9 @@ Some guidelines in reading this document:
 ## [new release]
 * Fix [#15](https://github.com/log-oscon/redux-wpapi/issues/15) - Support for register dashed-routes as camelCase ([#16](https://github.com/log-oscon/redux-wpapi/pull/16))
 * TTL (Time-to-live) now can be overriden by each request. ([#17](https://github.com/log-oscon/redux-wpapi/pull/17))
-* Fix [#12](https://github.com/log-oscon/redux-wpapi/issues/12) – Promise returned from middleware dispatch was overlaping responses with same name.
-* **[BC]** `selectQuery` renamed to `selectRequest` and now also accepts `{ cacheID, page }` for selecting Requests. ([#13](https://github.com/log-oscon/redux-wpapi/pull/13))
+* [#13](https://github.com/log-oscon/redux-wpapi/pull/13)
+  * **[BC]** - `selectQuery` renamed to `selectRequest` and now also accepts `{ cacheID, page }` for selecting Requests.
+  * Fix [#12](https://github.com/log-oscon/redux-wpapi/issues/12) – Promise returned from middleware dispatch was overlaping responses with same name.
 
 ## 1.1.0
 
