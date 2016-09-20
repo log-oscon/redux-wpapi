@@ -1,5 +1,8 @@
 import isFunction from 'lodash/isFunction';
 import { createSelector } from 'reselect';
+import isString from 'lodash/isString';
+import constant from 'lodash/constant';
+import Immutable from 'immutable';
 
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
@@ -41,51 +44,79 @@ export const withDenormalize = thunk =>
     }
   );
 
-export const selectQuery = name => createSelector(
-  createSelector(
-    state => state.wp.getIn(['requestsByName', name]),
-    state => state.wp.getIn(['requestsByQuery']),
-    (currentRequest, cache) => {
-      if (!currentRequest) return false;
+export const selectRequest = (requestData) => {
+  let requestIDSelector;
+  if (isString(requestData)) {
+    requestIDSelector = state => state.wp.getIn(['requestsByName', requestData]);
+  } else if (requestData.name) {
+    requestIDSelector = state =>
+      state.wp.getIn(['requestsByName', requestData.name]).merge(requestData);
+  } else {
+    if (!requestData.cacheID) {
+      throw new Error(
+        '\'cacheId\' or \'name\' must be provided for selectRequest'
+      );
+    }
 
-      const cacheID = currentRequest.get('cacheID');
-      const page = currentRequest.get('page');
+    requestIDSelector = constant(new Immutable.Map({
+      page: 1,
+      ...requestData,
+    }));
+  }
 
-      if (cacheID) {
-        return currentRequest
-        .merge(cache.getIn([cacheID, page]))
-        .merge(cache.getIn([cacheID, 'pagination']));
+  return createSelector(
+    createSelector(
+      requestIDSelector,
+      state => state.wp.getIn(['requestsByQuery']),
+      (currentRequest, cache) => {
+        if (!currentRequest) return false;
+
+        const cacheID = currentRequest.get('cacheID');
+        const page = currentRequest.get('page');
+
+        if (cacheID) {
+          return currentRequest
+          .merge(cache.getIn([cacheID, page]))
+          .merge(cache.getIn([cacheID, 'pagination']));
+        }
+
+        return currentRequest;
+      }
+    ),
+    localResources,
+    (request, resources) => {
+      if (!request) {
+        return {
+          status: pending,
+          error: false,
+          data: false,
+        };
       }
 
-      return currentRequest;
-    }
-  ),
-  localResources,
-  (request, resources) => {
-    if (!request) {
-      return {
-        status: pending,
-        error: false,
-        data: false,
-      };
-    }
+      if (!request.get('data')) {
+        return {
+          data: false,
+          error: false,
+          ...request.toJSON(),
+        };
+      }
 
-    if (!request.get('data')) {
-      return {
-        data: false,
-        error: false,
-        ...request.toJSON(),
-      };
-    }
+      const memo = {};
+      let data = request.get('data');
+      if (data.toJSON) {
+        data = data.toJSON();
+      }
 
-    const memo = {};
-    let data = request.get('data');
-    if (data.toJSON) {
-      data = data.toJSON();
+      return request.set(
+        'data', data.map(id => denormalize(resources, id, memo))
+      ).toJSON();
     }
+  );
+};
 
-    return request.set(
-      'data', data.map(id => denormalize(resources, id, memo))
-    ).toJSON();
-  }
-);
+export const selectQuery = (name) => {
+  // eslint-disable-next-line no-console
+  console.warn('Deprecation warning: `selectQuery` was renamed to `selectRequest`');
+  return selectRequest(name);
+};
+

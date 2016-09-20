@@ -8,7 +8,7 @@ import find from 'lodash/find';
 import Immutable from 'immutable';
 import isArray from 'lodash/isArray';
 import isUndefined from 'lodash/isUndefined';
-import { selectQuery } from './selectors';
+import { selectRequest } from './selectors';
 import WPAPIAdapter from './adapters/wpapi';
 import { lastCacheUpdate as lastCacheUpdateSymbol } from './symbols';
 
@@ -117,7 +117,10 @@ export default class ReduxWPAPI {
 
         if (Date.now() - lastCacheUpdate < ttl) {
           return Promise.resolve(
-            selectQuery(meta.name)(store.getState())
+            selectRequest({
+              cacheID: payload.cacheID,
+              page: payload.page,
+            })(store.getState())
           );
         }
       }
@@ -146,7 +149,16 @@ export default class ReduxWPAPI {
             meta: { ...meta, responseAt: Date.now() },
           })
       )
-      .then(() => selectQuery(meta.name)(store.getState()))
+      .then(() => {
+        if (meta.operation === 'get') {
+          return selectRequest({
+            cacheID: payload.cacheID,
+            page: payload.page,
+          })(store.getState());
+        }
+
+        return selectRequest(meta.name)(store.getState());
+      })
     );
   }
 

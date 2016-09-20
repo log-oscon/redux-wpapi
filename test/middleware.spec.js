@@ -193,9 +193,9 @@ describe('Middleware', () => {
     });
   });
 
-  it('should return a promise that resolves to selectQuery result', () => {
+  it('should return a promise that resolves to selectRequest result', () => {
     const { middleware } = new ReduxWPAPI({
-      adapter: createFakeAdapter(successfulCollectionRequest),
+      adapter: createFakeAdapter(successfulQueryBySlug),
     });
 
     const dispatched = [];
@@ -204,7 +204,7 @@ describe('Middleware', () => {
       dispatched.push(dispatch);
       store.state = { wp: successfulQueryBySlugState };
     };
-    const action = createCallAPIActionFrom(successfulCollectionRequest);
+    const action = createCallAPIActionFrom(successfulQueryBySlug);
     const result = middleware(store)(fakeNext)(action);
     expect(result).toBeA(Promise);
 
@@ -220,7 +220,7 @@ describe('Middleware', () => {
     });
   });
 
-  it('should return a promise that reject to selectQuery result', () => {
+  it('should return a promise that reject to selectRequest result', () => {
     const { middleware } = new ReduxWPAPI({
       adapter: createFakeAdapter(unsuccessfulCollectionRequest, {
         sendRequest: () => Promise.reject(unsuccessfulCollectionRequest.error),
