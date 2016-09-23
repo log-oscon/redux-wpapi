@@ -12,6 +12,7 @@ Some guidelines in reading this document:
 
 ## [new release]
 * Fix [#15](https://github.com/log-oscon/redux-wpapi/issues/15) - Support for register dashed-routes as camelCase ([#16](https://github.com/log-oscon/redux-wpapi/pull/16))
+* TTL (Time-to-live) now can be overriden by each request. ([#17](https://github.com/log-oscon/redux-wpapi/pull/17))
 
 ## 1.1.0
 
@@ -20,13 +21,13 @@ Some guidelines in reading this document:
 
 ## 1.0.1
 
-* Fix selector, which was referring to `entity` instead `resource`.
+* Fix selector, which was referring to `entity` instead `resource`
 
 ## 1.0.0
 
-* Introduce Adapters, an abstraction of API specifics so ReduxWPAPI can communicate with any other API client. ([#8](https://github.com/log-oscon/redux-wpapi/pull/8))
-  * **[BC]** Rename `entity` to `resource` for better REST compliance.
-  * **[BC]** Rename Request Statuses for better Promise compliance.
+* Introduce Adapters, an abstraction of API specifics so ReduxWPAPI can communicate with any other API client ([#8](https://github.com/log-oscon/redux-wpapi/pull/8))
+  * **[BC]** Rename `entity` to `resource` for better REST compliance
+  * **[BC]** Rename Request Statuses for better Promise compliance
 * Add integration with Travis and adds NPM and Travis badges
 * Implement reducer tests ([#6](https://github.com/log-oscon/redux-wpapi/pull/6))
 * Draft on Contributions and the introduction of this `CHANGELOG.md` file ([#5](https://github.com/log-oscon/redux-wpapi/pull/5))
