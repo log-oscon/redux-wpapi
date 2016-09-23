@@ -4,7 +4,7 @@ import Immutable from 'immutable';
 import { createSelector } from 'reselect';
 
 import { initialReducerState } from '../src/ReduxWPAPI';
-import { selectRequest, selectQuery, withDenormalize } from '../src/selectors';
+import { selectRequest, selectRequestRaw, selectQuery, withDenormalize } from '../src/selectors';
 import { pending, resolved } from '../src/constants/requestStatus';
 
 describe('Selector selectQuery', () => {
@@ -16,9 +16,107 @@ describe('Selector selectQuery', () => {
   });
 });
 
+describe('Selector selectRequestRaw', () => {
+  it('should return a Request for empty state', () => {
+    const state = { wp: initialReducerState };
+    expect(selectRequestRaw('test')(state))
+    .toEqual({
+      status: pending,
+      error: false,
+      data: false,
+    });
+  });
+
+  it('should return a Request for pending state', () => {
+    const cacheID = 'test/';
+    const queryState = { status: pending, error: false, requestAt: Date.now(), operation: 'get' };
+    const state = {
+      wp: (
+        initialReducerState
+        .mergeIn(['requestsByName', 'test'], { cacheID, page: 1 })
+        .setIn(['requestsByQuery', 'test/', 1], queryState)
+      ),
+    };
+    expect(selectRequestRaw('test')(state))
+    .toEqual({
+      status: pending,
+      operation: queryState.operation,
+      requestAt: queryState.requestAt,
+      cacheID,
+      error: false,
+      data: false,
+      page: 1,
+    });
+  });
+
+  it('should return a Request by cacheID + page', () => {
+    const resource = { id: 1, title: 'lol' };
+    const cacheID = 'test/';
+    const queryState = {
+      status: resolved,
+      error: false,
+      requestAt: Date.now(),
+      operation: 'get',
+      data: [0],
+    };
+    const state = {
+      wp: (
+        initialReducerState
+        .setIn(['resources', 0], resource)
+        .mergeIn(['requestsByName', 'test'], { cacheID, page: 1 })
+        .setIn(['requestsByQuery', 'test/', 1], queryState)
+      ),
+    };
+
+    const selector = selectRequestRaw({ cacheID: 'test/', page: 1 });
+    const selectedState = selector(state);
+
+    expect(selectedState)
+    .toEqual({
+      status: resolved,
+      operation: queryState.operation,
+      requestAt: queryState.requestAt,
+      cacheID,
+      error: false,
+      page: 1,
+      data: [0],
+    });
+  });
+
+  it('should refer to same objects between two selections with same input state', () => {
+    const resource = { id: 1, title: 'lol' };
+    const cacheID = 'test/';
+    const queryState = {
+      status: resolved,
+      error: false,
+      requestAt: Date.now(),
+      operation: 'get',
+      data: [0],
+    };
+    const state = {
+      wp: (
+        initialReducerState
+        .setIn(['resources', 0], resource)
+        .mergeIn(['requestsByName', 'test'], { cacheID, page: 1 })
+        .setIn(['requestsByQuery', 'test/', 1], queryState)
+      ),
+    };
+
+    const selector = selectRequestRaw('test');
+    const selectedState = selector(state);
+    expect(selector(state)).toBe(selectedState);
+  });
+});
+
 describe('Selector selectRequest', () => {
   it('should return a Request for empty state', () => {
     const state = { wp: initialReducerState };
+    expect(selectRequest('test')(state))
+    .toEqual({
+      status: pending,
+      error: false,
+      data: false,
+    });
     expect(selectRequest('test')(state))
     .toEqual({
       status: pending,
