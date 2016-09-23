@@ -10,9 +10,8 @@ Some guidelines in reading this document:
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
 * Annotations starting with **[BC]** indicates breaking change.
 
-
 ## [new release]
-
+* Fix [#15](https://github.com/log-oscon/redux-wpapi/issues/15) - Support for register dashed-routes as camelCase ([#16](https://github.com/log-oscon/redux-wpapi/pull/16))
 * TTL (Time-to-live) now can be overriden by each request. ([#17](https://github.com/log-oscon/redux-wpapi/pull/17))
 
 ## 1.1.0

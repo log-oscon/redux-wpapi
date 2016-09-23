@@ -2,6 +2,7 @@ import find from 'lodash/find';
 import findKey from 'lodash/findKey';
 import reduce from 'lodash/reduce';
 import capitalize from 'lodash/capitalize';
+import camelCase from 'lodash/camelCase';
 
 /**
  * This adapter connects `node-wpapi` to `redux-wpapi`, abstracting any
@@ -218,7 +219,12 @@ export default class WPAPIAdapter {
     // Skips namespace, takes fragments and preserves only static parts
     uri = uri.replace(`${namespace}/`, '');
     const fragments = uri.split('/');
-    const [resource] = fragments;
+    const resource = camelCase(fragments[0]);
+
+    if (!this.api[resource]) {
+      throw new Error(`Unregistered route, expected '${resource}' to resolve to '${url}'`);
+    }
+
     const query = this.api[resource]();
     let aggregator = resource;
 
