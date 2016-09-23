@@ -10,7 +10,7 @@ import { id as idSymbol } from './symbols';
 const requestsByQuery = state => state.wp.getIn(['requestsByQuery']);
 const localResources = state => state.wp.getIn(['resources']);
 
-export const denormalize = (resources, id, memoized = {}) => {
+export const denormalizeTree = (resources, id, memoized = {}) => {
   /* eslint-disable no-param-reassign, no-underscore-dangle */
   if (memoized[id]) return memoized[id];
 
@@ -23,7 +23,7 @@ export const denormalize = (resources, id, memoized = {}) => {
     [idSymbol]: id,
     ...resource,
     ...mapDeep(resource._embedded || {},
-      embeddedId => denormalize(resources, embeddedId, memoized)
+      embeddedId => denormalizeTree(resources, embeddedId, memoized)
     ),
   };
 
@@ -40,7 +40,7 @@ export const withDenormalize = thunk =>
       }
 
       const memo = {};
-      return target(id => denormalize(resources, id, memo));
+      return target(id => denormalizeTree(resources, id, memo));
     }
   );
 
@@ -74,47 +74,47 @@ function formatRequestRaw(request, cache) {
 /**
  * Creates a selector without denormalization to resolve to a Request
  *
- * Creates a selector to resolve to a Request based on requestData, which might be either its name
+ * Creates a selector to resolve to a Request based on requestID, which might be either its name
  * or a cacheID and page. It doesn't do any denormalization, so data contains local ids.
  *
- * @param   {String|Object} requestData If string, the name of the request, if Object, the cacheID
- *                                      and the page for that request.
+ * @param   {String|Object} requestID If string, the name of the request, if Object, the cacheID
+ *                                    and the page for that request.
  *
- * @returns {Function}                  Selector to pick from state the request.
+ * @returns {Function}                Selector to pick from state the request.
  */
-export const selectRequestRaw = (requestData) => {
-  if (!requestData) {
+export const selectRequestRaw = (requestID) => {
+  if (!requestID) {
     throw new Error(
-      '\'requestData\' must either be the request name or a object with its cacheID and page'
+      '\'requestID\' must either be the request name or a object with its cacheID and page'
     );
   }
 
-  if (isString(requestData)) {
+  if (isString(requestID)) {
     return createSelector(
-      state => state.wp.getIn(['requestsByName', requestData]),
+      state => state.wp.getIn(['requestsByName', requestID]),
       requestsByQuery,
       formatRequestRaw
     );
   }
 
-  if (requestData.name) {
+  if (requestID.name) {
     return createSelector(
-      state => state.wp.getIn(['requestsByName', requestData.name]).merge(requestData),
+      state => state.wp.getIn(['requestsByName', requestID.name]).merge(requestID),
       requestsByQuery,
       formatRequestRaw
     );
   }
 
-  if (!requestData.cacheID) {
+  if (!requestID.cacheID) {
     throw new Error(
-      '\'cacheId\' or \'name\' must be provided for selectRequest'
+      '\'cacheId\' or \'name\' must be provided for select a request'
     );
   }
 
   const request = new Immutable.Map({
     page: 1,
     data: false,
-    ...requestData,
+    ...requestID,
   });
 
   return (...args) => formatRequestRaw(request, requestsByQuery(...args));
@@ -125,27 +125,26 @@ export const selectRequestRaw = (requestData) => {
  *
  * Creates a selector by its name or by its cacheID and page.
  *
- * @param   {String|Object} queryID If string, the name of the request, if Object, the cacheID
- *                                  and the page for that request.
- * @returns {Function}              Selector which accepts the app state and returns the request
+ * @param   {String|Object} requestID If string, the name of the request, if Object, the cacheID
+ *                                    and the page for that request.
+ * @returns {Function}                Selector which accepts the app state and returns the request
  */
-export const selectRequest = (requestData) =>
-  createSelector(
-    selectRequestRaw(requestData),
-    localResources,
-    (requestRaw, resources) => {
-      if (!requestRaw.data) {
-        return requestRaw;
+export const selectRequest = (requestID) =>
+  withDenormalize(
+    createSelector(
+      selectRequestRaw(requestID),
+      requestRaw => denormalize => {
+        if (!requestRaw.data) {
+          return requestRaw;
+        }
+
+        return {
+          ...requestRaw,
+          data: requestRaw.data.map(denormalize),
+        };
       }
-
-      const memo = {};
-      return {
-        ...requestRaw,
-        data: requestRaw.data.map(id => denormalize(resources, id, memo)),
-      };
-    }
+    )
   );
-
 
 /**
  * @deprecated use selectRequest instead
