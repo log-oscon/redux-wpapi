@@ -31,7 +31,7 @@ const store = createStore(
 ## Usage
 ```js
 import React from 'react';
-import { wp, selectQuery, ResponseStatus } from 'redux-wpapi';
+import { wp, selectRequest, ResponseStatus } from 'redux-wpapi';
 import { connect } from 'react-redux';
 
 export class HomePage extends React.Component {
@@ -74,7 +74,7 @@ export class HomePage extends React.Component {
 }
 
 export default connect({
-  request: selectQuery('HomePagePosts'),
+  request: selectRequest('HomePagePosts'),
 }, { callAPI })(HomePage);
 ```
 
