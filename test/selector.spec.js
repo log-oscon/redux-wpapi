@@ -17,6 +17,16 @@ describe('Selector selectQuery', () => {
 });
 
 describe('Selector selectRequestRaw', () => {
+  it('should throw when Request is not Identifiable', () => {
+    expect(() => {
+      selectRequestRaw();
+    }).toThrow();
+
+    expect(() => {
+      selectRequestRaw({});
+    }).toThrow();
+  });
+
   it('should return a Request for empty state', () => {
     const state = { wp: initialReducerState };
     expect(selectRequestRaw('test')(state))

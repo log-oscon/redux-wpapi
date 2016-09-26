@@ -220,7 +220,7 @@ describe('Middleware', () => {
     });
   });
 
-  it('should return a promise that reject to selectRequest result', () => {
+  it('should return a promise that rejects to selectRequest result', () => {
     const { middleware } = new ReduxWPAPI({
       adapter: createFakeAdapter(unsuccessfulCollectionRequest, {
         sendRequest: () => Promise.reject(unsuccessfulCollectionRequest.error),

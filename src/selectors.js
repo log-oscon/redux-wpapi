@@ -5,14 +5,19 @@ import Immutable from 'immutable';
 
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
-import { id as idSymbol } from './symbols';
+import { id as idSymbol, lastCacheUpdate as lastCacheUpdateSymbol } from './symbols';
 
 const requestsByQuery = state => state.wp.getIn(['requestsByQuery']);
 const localResources = state => state.wp.getIn(['resources']);
 
 export const denormalizeTree = (resources, id, memoized = {}) => {
   /* eslint-disable no-param-reassign, no-underscore-dangle */
-  if (memoized[id]) return memoized[id];
+  if (
+    memoized[id] &&
+    memoized[id][lastCacheUpdateSymbol] === resources.get(id)[lastCacheUpdateSymbol]
+  ) {
+    return memoized[id];
+  }
 
   const resource = resources.get(id);
   if (!resource) {
@@ -30,19 +35,29 @@ export const denormalizeTree = (resources, id, memoized = {}) => {
   return memoized[id];
 };
 
-export const withDenormalize = thunk =>
-  createSelector(
-    localResources,
-    thunk,
-    (resources, target) => {
-      if (!isFunction(target)) {
-        return target;
-      }
+export const withDenormalize = thunk => {
+  let previousValue;
+  let previousThunkValue;
+  const memo = {};
 
-      const memo = {};
-      return target(id => denormalizeTree(resources, id, memo));
+  return (state, ...args) => {
+    const nextValue = thunk(state, ...args);
+    if (nextValue === previousValue) {
+      return previousThunkValue;
     }
-  );
+
+    if (!isFunction(nextValue)) {
+      previousValue = nextValue;
+      previousThunkValue = nextValue;
+      return nextValue;
+    }
+
+    const resources = localResources(state);
+    previousValue = nextValue;
+    previousThunkValue = nextValue(id => denormalizeTree(resources, id, memo));
+    return previousThunkValue;
+  };
+};
 
 
 /**
@@ -85,7 +100,7 @@ function formatRequestRaw(request, cache) {
 export const selectRequestRaw = (requestID) => {
   if (!requestID) {
     throw new Error(
-      '\'requestID\' must either be the request name or a object with its cacheID and page'
+      '\'requestID\' must either be the request name or an object with its cacheID and page'
     );
   }
 
@@ -107,7 +122,7 @@ export const selectRequestRaw = (requestID) => {
 
   if (!requestID.cacheID) {
     throw new Error(
-      '\'cacheId\' or \'name\' must be provided for select a request'
+      '\'cacheId\' or \'name\' must be provided to select a request'
     );
   }
 
