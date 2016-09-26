@@ -4,6 +4,7 @@ import Immutable from 'immutable';
 import ReduxWPAPI from '../src/index.js';
 import { pending, resolved, rejected } from '../src/constants/requestStatus';
 
+import * as Symbols from '../src/symbols';
 import collectionRequest from './mocks/actions/collectionRequest';
 import modifyingRequest from './mocks/actions/modifyingRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
@@ -133,6 +134,9 @@ describe('Reducer', () => {
 
       expect(data).toBeAn(Array);
       expect(data.length).toBe(2);
+      expect(state.getIn(['resources', data[0]])).toContain({
+        [Symbols.lastCacheUpdate]: successfulCollectionRequest.meta.responseAt,
+      }, 'lastCacheUpdate should be updated');
     });
 
     it('should keep local ids instead objects in data, by query\'s cacheID', () => {
@@ -170,6 +174,7 @@ describe('Reducer', () => {
       const [id] = queryState.getIn([1, 'data']);
       const resource = state.getIn(['resources', id]);
       expect(resource).toContain({
+        [Symbols.lastCacheUpdate]: successfulQueryBySlug.meta.responseAt,
         link: successfulQueryBySlug.payload.response[0].link,
       });
     });

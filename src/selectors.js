@@ -1,13 +1,23 @@
 import isFunction from 'lodash/isFunction';
 import { createSelector } from 'reselect';
+import isString from 'lodash/isString';
+import Immutable from 'immutable';
 
 import { pending } from './constants/requestStatus';
 import { mapDeep } from './helpers';
-import { id as idSymbol } from './symbols';
+import { id as idSymbol, lastCacheUpdate as lastCacheUpdateSymbol } from './symbols';
 
-export const denormalize = (resources, id, memoized = {}) => {
+const requestsByQuery = state => state.wp.getIn(['requestsByQuery']);
+const localResources = state => state.wp.getIn(['resources']);
+
+export const denormalizeTree = (resources, id, memoized = {}) => {
   /* eslint-disable no-param-reassign, no-underscore-dangle */
-  if (memoized[id]) return memoized[id];
+  if (
+    memoized[id] &&
+    memoized[id][lastCacheUpdateSymbol] === resources.get(id)[lastCacheUpdateSymbol]
+  ) {
+    return memoized[id];
+  }
 
   const resource = resources.get(id);
   if (!resource) {
@@ -18,74 +28,145 @@ export const denormalize = (resources, id, memoized = {}) => {
     [idSymbol]: id,
     ...resource,
     ...mapDeep(resource._embedded || {},
-      embeddedId => denormalize(resources, embeddedId, memoized)
+      embeddedId => denormalizeTree(resources, embeddedId, memoized)
     ),
   };
 
   return memoized[id];
 };
 
-export const localResources = state => state.wp.getIn(['resources']);
+export const withDenormalize = thunk => {
+  let previousValue;
+  let previousThunkValue;
+  const memo = {};
 
-export const withDenormalize = thunk =>
-  createSelector(
-    localResources,
-    thunk,
-    (resources, target) => {
-      if (!isFunction(target)) {
-        return target;
-      }
-
-      const memo = {};
-      return target(id => denormalize(resources, id, memo));
+  return (state, ...args) => {
+    const nextValue = thunk(state, ...args);
+    if (nextValue === previousValue) {
+      return previousThunkValue;
     }
+
+    if (!isFunction(nextValue)) {
+      previousValue = nextValue;
+      previousThunkValue = nextValue;
+      return nextValue;
+    }
+
+    const resources = localResources(state);
+    previousValue = nextValue;
+    previousThunkValue = nextValue(id => denormalizeTree(resources, id, memo));
+    return previousThunkValue;
+  };
+};
+
+
+/**
+ * Adds pagination when available
+ */
+function formatRequestRaw(request, cache) {
+  if (!request) return { status: pending, data: false, error: false };
+
+  let requestFormatted = request;
+  const cacheID = request.get('cacheID');
+  const page = request.get('page');
+
+  if (cacheID) {
+    requestFormatted = request
+    .merge(cache.getIn([cacheID, page]))
+    .merge(cache.getIn([cacheID, 'pagination']));
+  }
+
+  requestFormatted = requestFormatted.toJSON();
+
+  if (!requestFormatted.data) {
+    return { data: false, error: false, ...requestFormatted };
+  }
+
+  return requestFormatted;
+}
+
+
+/**
+ * Creates a selector without denormalization to resolve to a Request
+ *
+ * Creates a selector to resolve to a Request based on requestID, which might be either its name
+ * or a cacheID and page. It doesn't do any denormalization, so data contains local ids.
+ *
+ * @param   {String|Object} requestID If string, the name of the request, if Object, the cacheID
+ *                                    and the page for that request.
+ *
+ * @returns {Function}                Selector to pick from state the request.
+ */
+export const selectRequestRaw = (requestID) => {
+  if (!requestID) {
+    throw new Error(
+      '\'requestID\' must either be the request name or an object with its cacheID and page'
+    );
+  }
+
+  if (isString(requestID)) {
+    return createSelector(
+      state => state.wp.getIn(['requestsByName', requestID]),
+      requestsByQuery,
+      formatRequestRaw
+    );
+  }
+
+  if (requestID.name) {
+    return createSelector(
+      state => state.wp.getIn(['requestsByName', requestID.name]).merge(requestID),
+      requestsByQuery,
+      formatRequestRaw
+    );
+  }
+
+  if (!requestID.cacheID) {
+    throw new Error(
+      '\'cacheId\' or \'name\' must be provided to select a request'
+    );
+  }
+
+  const request = new Immutable.Map({
+    page: 1,
+    data: false,
+    ...requestID,
+  });
+
+  return (...args) => formatRequestRaw(request, requestsByQuery(...args));
+};
+
+/**
+ * creates selector for a request
+ *
+ * Creates a selector by its name or by its cacheID and page.
+ *
+ * @param   {String|Object} requestID If string, the name of the request, if Object, the cacheID
+ *                                    and the page for that request.
+ * @returns {Function}                Selector which accepts the app state and returns the request
+ */
+export const selectRequest = (requestID) =>
+  withDenormalize(
+    createSelector(
+      selectRequestRaw(requestID),
+      requestRaw => denormalize => {
+        if (!requestRaw.data) {
+          return requestRaw;
+        }
+
+        return {
+          ...requestRaw,
+          data: requestRaw.data.map(denormalize),
+        };
+      }
+    )
   );
 
-export const selectQuery = name => createSelector(
-  createSelector(
-    state => state.wp.getIn(['requestsByName', name]),
-    state => state.wp.getIn(['requestsByQuery']),
-    (currentRequest, cache) => {
-      if (!currentRequest) return false;
+/**
+ * @deprecated use selectRequest instead
+ */
+export const selectQuery = (name) => {
+  // eslint-disable-next-line no-console
+  console.warn('Deprecation warning: `selectQuery` was renamed to `selectRequest`');
+  return selectRequest(name);
+};
 
-      const cacheID = currentRequest.get('cacheID');
-      const page = currentRequest.get('page');
-
-      if (cacheID) {
-        return currentRequest
-        .merge(cache.getIn([cacheID, page]))
-        .merge(cache.getIn([cacheID, 'pagination']));
-      }
-
-      return currentRequest;
-    }
-  ),
-  localResources,
-  (request, resources) => {
-    if (!request) {
-      return {
-        status: pending,
-        error: false,
-        data: false,
-      };
-    }
-
-    if (!request.get('data')) {
-      return {
-        data: false,
-        error: false,
-        ...request.toJSON(),
-      };
-    }
-
-    const memo = {};
-    let data = request.get('data');
-    if (data.toJSON) {
-      data = data.toJSON();
-    }
-
-    return request.set(
-      'data', data.map(id => denormalize(resources, id, memo))
-    ).toJSON();
-  }
-);

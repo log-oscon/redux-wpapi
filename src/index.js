@@ -4,4 +4,4 @@ export default ReduxWPAPI;
 export * as RequestStatus from './constants/requestStatus';
 export callAPI from './actions/callAPI';
 export * as Symbols from './symbols';
-export { selectQuery, withDenormalize } from './selectors';
+export { selectQuery, selectRequest, withDenormalize } from './selectors';
