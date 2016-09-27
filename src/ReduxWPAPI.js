@@ -5,6 +5,7 @@ import nthArg from 'lodash/nthArg';
 import mapKeys from 'lodash/mapKeys';
 import forEach from 'lodash/forEach';
 import find from 'lodash/find';
+import noop from 'lodash/noop';
 import Immutable from 'immutable';
 import isArray from 'lodash/isArray';
 import isUndefined from 'lodash/isUndefined';
@@ -237,8 +238,9 @@ export default class ReduxWPAPI {
         const additionalData = { [lastCacheUpdateSymbol]: requestState.responseAt };
 
         body.forEach(resource => {
-          newState = this.indexResource(newState, aggregator, resource, additionalData);
-          data.push(this.getResourceLocalID(newState, aggregator, resource));
+          newState = this.indexResource(newState, aggregator, resource, additionalData, id => {
+            data.push(id);
+          });
         });
 
         if (action.meta.operation === 'get') {
@@ -291,7 +293,7 @@ export default class ReduxWPAPI {
     return indexBy && state.getIn(['resourcesIndexes', aggregator, indexBy, resource[indexBy]]);
   }
 
-  indexResource(state, aggregator, resource, meta) {
+  indexResource(state, aggregator, resource, meta, onIndex = noop) {
     let newState = state;
     let _embedded;
     const curies = (resource._links || {}).curies;
@@ -316,8 +318,13 @@ export default class ReduxWPAPI {
           toEmbed = (isArray(toEmbed) ? toEmbed : [toEmbed]).reduce((collection, toBeEmbedded) => {
             if (toBeEmbedded.code === 'rest_no_route') return collection;
 
-            newState = this.indexResource(newState, embeddedAggregator, toBeEmbedded, meta);
-            collection.push(this.getResourceLocalID(newState, embeddedAggregator, toBeEmbedded));
+            newState = this.indexResource(
+              newState,
+              embeddedAggregator,
+              toBeEmbedded,
+              meta,
+              id => collection.push(id)
+            );
 
             return collection;
           }, []);
@@ -367,6 +374,7 @@ export default class ReduxWPAPI {
       }
     });
 
+    onIndex(resourceLocalID);
     return newState;
   }
 

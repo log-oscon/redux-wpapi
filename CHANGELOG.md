@@ -19,6 +19,7 @@ Some guidelines in reading this document:
   * Exposes `selectRequestRaw`, so a request might be selected without denormalization step
   * Fix [#12](https://github.com/log-oscon/redux-wpapi/issues/12) – Promise returned from middleware dispatch was overlaping responses with same name
   * Fix [#14](https://github.com/log-oscon/redux-wpapi/issues/14) - lastCacheUpdate should be used as Symbol for preventing collisions, now been tested
+* Fix [#18](https://github.com/log-oscon/redux-wpapi/issues/18) - Allow indexation of resources without indexers (such as id or custom indexers) [#19](https://github.com/log-oscon/redux-wpapi/pull/19)
 
 ## 1.1.0
 

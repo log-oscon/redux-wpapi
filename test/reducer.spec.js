@@ -9,6 +9,7 @@ import collectionRequest from './mocks/actions/collectionRequest';
 import modifyingRequest from './mocks/actions/modifyingRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
 import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
+import successfulOptionsResponse from './mocks/actions/successfulOptionsResponse';
 import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
 import unsuccessfulModifyingRequest from './mocks/actions/unsuccessfulModifyingRequest';
 import cacheHitSingle from './mocks/actions/cacheHitSingle';
@@ -154,6 +155,12 @@ describe('Reducer', () => {
 
       expect(state.getIn(['resources', data[1]]).link)
       .toBe(successfulCollectionRequest.payload.response[1].link);
+    });
+
+    it('should index even if there is no `id` nor customCacheIndexes in the response', () => {
+      const state = reducer(undefined, successfulOptionsResponse);
+      expect(state.getIn(['resources', 0]).blogname)
+      .toBe(successfulOptionsResponse.payload.response[0].blogname);
     });
 
     it('should persist locally each found resource exactly once', () => {
