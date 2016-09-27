@@ -318,8 +318,13 @@ export default class ReduxWPAPI {
           toEmbed = (isArray(toEmbed) ? toEmbed : [toEmbed]).reduce((collection, toBeEmbedded) => {
             if (toBeEmbedded.code === 'rest_no_route') return collection;
 
-            newState = this.indexResource(newState, embeddedAggregator, toBeEmbedded, meta);
-            collection.push(this.getResourceLocalID(newState, embeddedAggregator, toBeEmbedded));
+            newState = this.indexResource(
+              newState,
+              embeddedAggregator,
+              toBeEmbedded,
+              meta,
+              id => collection.push(id)
+            );
 
             return collection;
           }, []);
