@@ -12,6 +12,7 @@ Some guidelines in reading this document:
 
 ## [new release]
 * Mark embedded resource as `partial` until they are fetched individually (closes [#20](https://github.com/log-oscon/redux-wpapi/issues/20)) ([#21](https://github.com/log-oscon/redux-wpapi/pull/21))
+* Fix indexation: type no longer matters in `getLocalResourceID`
 
 ## 1.2.0
 * Fix [#15](https://github.com/log-oscon/redux-wpapi/issues/15) - Support for register dashed-routes as camelCase ([#16](https://github.com/log-oscon/redux-wpapi/pull/16))
