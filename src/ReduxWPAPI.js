@@ -95,22 +95,26 @@ export default class ReduxWPAPI {
       payload.cacheID = this.adapter.generateCacheID(request);
       payload.page = parseInt(this.adapter.getRequestedPage(request) || 1, 10);
 
-      if (resourceLocalID) {
+      if (resourceLocalID !== false) {
         cache = state.getIn(['resources', resourceLocalID]);
         data = [resourceLocalID];
       }
 
       if (cache) {
         lastCacheUpdate = cache[lastCacheUpdateSymbol];
-
         if (cache[partialSymbol]) {
           ttl = 0;
         }
       } else {
         cache = state.getIn(['requestsByQuery', payload.cacheID, payload.page]);
         data = state.get('data');
+
+        if (cache && cache.get('error')) {
+          cache = false;
+        }
       }
-      if (cache && (resourceLocalID || (isUndefined(resourceLocalID) && !cache.get('error')))) {
+
+      if (cache) {
         lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
         next({
           meta,
@@ -296,11 +300,15 @@ export default class ReduxWPAPI {
       indexer =>
         !isUndefined(resource[indexer]) &&
         !isUndefined(
-          state.getIn(['resourcesIndexes', aggregator, indexer, resource[indexer]])
+          state.getIn(['resourcesIndexes', aggregator, indexer, resource[indexer].toString()])
         )
     );
 
-    return indexBy && state.getIn(['resourcesIndexes', aggregator, indexBy, resource[indexBy]]);
+    if (isUndefined(indexBy)) {
+      return false;
+    }
+
+    return state.getIn(['resourcesIndexes', aggregator, indexBy, resource[indexBy].toString()]);
   }
 
   indexResource(state, aggregator, resource, meta, onIndex = noop) {
@@ -313,7 +321,7 @@ export default class ReduxWPAPI {
     let resourceLocalID = this.getResourceLocalID(state, aggregator, resource);
     const emptyState = {};
     let oldState = emptyState;
-    if (!isUndefined(resourceLocalID)) {
+    if (resourceLocalID !== false) {
       oldState = newState.getIn(['resources', resourceLocalID]);
     }
 
@@ -354,7 +362,7 @@ export default class ReduxWPAPI {
       });
     }
 
-    if (isUndefined(resourceLocalID)) {
+    if (resourceLocalID === false) {
       resourceLocalID = newState.get('resources').size;
     }
 
@@ -386,7 +394,7 @@ export default class ReduxWPAPI {
     forEach(isArray(indexers) ? ['id'].concat(indexers) : ['id', indexers], indexer => {
       if (!isUndefined(resource[indexer])) {
         newState = newState.setIn(
-          ['resourcesIndexes', aggregator, indexer, resource[indexer]],
+          ['resourcesIndexes', aggregator, indexer, resource[indexer].toString()],
           resourceLocalID
         );
       }

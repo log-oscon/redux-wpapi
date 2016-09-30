@@ -9,7 +9,7 @@ import collectionRequest from './mocks/actions/collectionRequest';
 import modifyingRequest from './mocks/actions/modifyingRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
 import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
-import successfulOptionsResponse from './mocks/actions/successfulOptionsResponse';
+import successfulOptionsRequest from './mocks/actions/successfulOptionsRequest';
 import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
 import unsuccessfulModifyingRequest from './mocks/actions/unsuccessfulModifyingRequest';
 import cacheHitSingle from './mocks/actions/cacheHitSingle';
@@ -159,9 +159,9 @@ describe('Reducer', () => {
     });
 
     it('should index even if there is no `id` nor customCacheIndexes in the response', () => {
-      const state = reducer(undefined, successfulOptionsResponse);
+      const state = reducer(undefined, successfulOptionsRequest);
       expect(state.getIn(['resources', 0]).blogname)
-      .toBe(successfulOptionsResponse.payload.response[0].blogname);
+      .toBe(successfulOptionsRequest.payload.response[0].blogname);
     });
 
     it('mark as partial embedded resources', () => {
