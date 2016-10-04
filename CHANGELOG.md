@@ -10,7 +10,7 @@ Some guidelines in reading this document:
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
 * Annotations starting with **[BC]** indicates breaking change.
 
-## [new release]
+## 1.2.1
 * ([#21](https://github.com/log-oscon/redux-wpapi/pull/21))
     * Mark embedded resource as `partial` until they are fetched individually (closes [#20](https://github.com/log-oscon/redux-wpapi/issues/20))
     * Fix indexation: type no longer matters in `getLocalResourceID`
