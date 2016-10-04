@@ -11,7 +11,10 @@ import isArray from 'lodash/isArray';
 import isUndefined from 'lodash/isUndefined';
 import { selectRequest } from './selectors';
 import WPAPIAdapter from './adapters/wpapi';
-import { lastCacheUpdate as lastCacheUpdateSymbol } from './symbols';
+import {
+  lastCacheUpdate as lastCacheUpdateSymbol,
+  partial as partialSymbol,
+} from './symbols';
 
 import {
   REDUX_WP_API_CALL,
@@ -76,6 +79,15 @@ export default class ReduxWPAPI {
       let cache;
       let lastCacheUpdate;
       let data;
+      let ttl;
+      if (this.adapter.getTTL) {
+        ttl = this.adapter.getTTL(request);
+      }
+
+      if (ttl !== 0 && !ttl) {
+        ttl = this.settings.ttl;
+      }
+
       const state = store.getState().wp;
       const indexes = this.adapter.getIndexes(request);
       const resourceLocalID = this.getResourceLocalID(state, meta.aggregator, indexes);
@@ -83,18 +95,26 @@ export default class ReduxWPAPI {
       payload.cacheID = this.adapter.generateCacheID(request);
       payload.page = parseInt(this.adapter.getRequestedPage(request) || 1, 10);
 
-      if (resourceLocalID) {
+      if (resourceLocalID !== false) {
         cache = state.getIn(['resources', resourceLocalID]);
         data = [resourceLocalID];
       }
 
       if (cache) {
         lastCacheUpdate = cache[lastCacheUpdateSymbol];
+        if (cache[partialSymbol]) {
+          ttl = 0;
+        }
       } else {
         cache = state.getIn(['requestsByQuery', payload.cacheID, payload.page]);
         data = state.get('data');
+
+        if (cache && cache.get('error')) {
+          cache = false;
+        }
       }
-      if (cache && (resourceLocalID || (isUndefined(resourceLocalID) && !cache.get('error')))) {
+
+      if (cache) {
         lastCacheUpdate = lastCacheUpdate || cache.get('responseAt') || cache.get('requestAt');
         next({
           meta,
@@ -106,15 +126,6 @@ export default class ReduxWPAPI {
             data,
           },
         });
-
-        let ttl;
-        if (this.adapter.getTTL) {
-          ttl = this.adapter.getTTL(request);
-        }
-
-        if (ttl !== 0 && !ttl) {
-          ttl = this.settings.ttl;
-        }
 
         if (Date.now() - lastCacheUpdate < ttl) {
           return Promise.resolve(
@@ -235,7 +246,10 @@ export default class ReduxWPAPI {
         }
 
         const data = [];
-        const additionalData = { [lastCacheUpdateSymbol]: requestState.responseAt };
+        const additionalData = {
+          [lastCacheUpdateSymbol]: requestState.responseAt,
+          [partialSymbol]: false,
+        };
 
         body.forEach(resource => {
           newState = this.indexResource(newState, aggregator, resource, additionalData, id => {
@@ -286,11 +300,15 @@ export default class ReduxWPAPI {
       indexer =>
         !isUndefined(resource[indexer]) &&
         !isUndefined(
-          state.getIn(['resourcesIndexes', aggregator, indexer, resource[indexer]])
+          state.getIn(['resourcesIndexes', aggregator, indexer, resource[indexer].toString()])
         )
     );
 
-    return indexBy && state.getIn(['resourcesIndexes', aggregator, indexBy, resource[indexBy]]);
+    if (isUndefined(indexBy)) {
+      return false;
+    }
+
+    return state.getIn(['resourcesIndexes', aggregator, indexBy, resource[indexBy].toString()]);
   }
 
   indexResource(state, aggregator, resource, meta, onIndex = noop) {
@@ -301,14 +319,16 @@ export default class ReduxWPAPI {
     delete _links.curies;
 
     let resourceLocalID = this.getResourceLocalID(state, aggregator, resource);
-    let oldState = {};
-    if (!isUndefined(resourceLocalID)) {
+    const emptyState = {};
+    let oldState = emptyState;
+    if (resourceLocalID !== false) {
       oldState = newState.getIn(['resources', resourceLocalID]);
     }
 
     if (resource._embedded) {
       _embedded = { ...(oldState || { })._embedded };
       const alisedEmbedded = this.resolveAliases(resource._embedded, curies);
+      const embeddedMeta = { ...meta, [partialSymbol]: true };
       forEach(alisedEmbedded, (embeddable, relName) => {
         forEach(_links[relName], (link, index) => {
           const embeddedAggregator = this.adapter.getAggregator(link.href);
@@ -322,7 +342,7 @@ export default class ReduxWPAPI {
               newState,
               embeddedAggregator,
               toBeEmbedded,
-              meta,
+              embeddedMeta,
               id => collection.push(id)
             );
 
@@ -342,8 +362,13 @@ export default class ReduxWPAPI {
       });
     }
 
-    if (isUndefined(resourceLocalID)) {
+    if (resourceLocalID === false) {
       resourceLocalID = newState.get('resources').size;
+    }
+
+    let isPartial = meta[partialSymbol] || false;
+    if (oldState !== emptyState && oldState[partialSymbol] && !meta[partialSymbol]) {
+      isPartial = false;
     }
 
     let resourceTransformed = {
@@ -352,6 +377,7 @@ export default class ReduxWPAPI {
       ...meta,
       _links,
       _embedded,
+      [partialSymbol]: isPartial,
     };
 
     if (this.adapter.transformResource) {
@@ -368,7 +394,7 @@ export default class ReduxWPAPI {
     forEach(isArray(indexers) ? ['id'].concat(indexers) : ['id', indexers], indexer => {
       if (!isUndefined(resource[indexer])) {
         newState = newState.setIn(
-          ['resourcesIndexes', aggregator, indexer, resource[indexer]],
+          ['resourcesIndexes', aggregator, indexer, resource[indexer].toString()],
           resourceLocalID
         );
       }

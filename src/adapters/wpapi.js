@@ -284,7 +284,7 @@ export default class WPAPIAdapter {
    */
   buildRequest({ request: requestBuilder, additionalParams }) {
     const wpRequest = requestBuilder(this.api);
-    const { operation = 'get', ...body, ttl } = additionalParams;
+    const { operation = 'get', ttl, ...body } = additionalParams;
 
     return { wpRequest, operation, body, ttl };
   }

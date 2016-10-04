@@ -8,13 +8,20 @@ import createFakeAdapter from './mocks/createFakeAdapter';
 
 import collectionRequest from './mocks/actions/collectionRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
+import successfulAuthorRequest from './mocks/actions/successfulAuthorRequest';
 import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
 import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
 import { createFakeStore } from './mocks/store';
 import { initialReducerState } from '../src/ReduxWPAPI';
-import { REDUX_WP_API_CALL, REDUX_WP_API_CACHE_HIT } from '../src/constants/actions';
 import { resolved, rejected } from '../src/constants/requestStatus';
-import { lastCacheUpdate as lastCacheUpdateSymbol } from '../src/symbols';
+import * as Symbols from '../src/symbols';
+
+import {
+  REDUX_WP_API_CALL,
+  REDUX_WP_API_CACHE_HIT,
+  REDUX_WP_API_REQUEST,
+  REDUX_WP_API_SUCCESS,
+} from '../src/constants/actions';
 
 const createCallAPIActionFrom = ({
   meta: { name },
@@ -34,10 +41,13 @@ const successfulQueryBySlugState = initialReducerState.set(
   new Immutable.List([
     {
       ...successfulQueryBySlug.payload.response[0]._embedded.author[0],
-      [lastCacheUpdateSymbol]: Date.now() },
+      [Symbols.lastCacheUpdate]: Date.now(),
+      [Symbols.partial]: true,
+    },
     {
       ...successfulQueryBySlug.payload.response[0],
-      [lastCacheUpdateSymbol]: Date.now(),
+      [Symbols.partial]: false,
+      [Symbols.lastCacheUpdate]: Date.now(),
       _embedded: { author: 0 },
     },
   ])
@@ -48,6 +58,9 @@ const successfulQueryBySlugState = initialReducerState.set(
     any: {
       slug: { 'dumb1-modified': 1 },
       id: { 1: 1 },
+    },
+    users: {
+      id: { 2: 0 },
     },
   })
 )
@@ -140,8 +153,7 @@ describe('Middleware', () => {
     });
 
     const dispatched = [];
-    const nextMiddlewareReturn = Symbol();
-    const fakeNext = dispatch => dispatched.push(dispatch) && nextMiddlewareReturn;
+    const fakeNext = dispatch => dispatched.push(dispatch);
     const action = createCallAPIActionFrom(successfulQueryBySlug);
 
     // CACHED STATE
@@ -154,6 +166,60 @@ describe('Middleware', () => {
       expect(dispatched[0].type).toBe(REDUX_WP_API_CACHE_HIT);
     });
   });
+
+  it('should dispatch CACHE_HIT action and REQUEST again when cache is invalidated by ttl', () => {
+    const { middleware } = new ReduxWPAPI({
+      adapter: createFakeAdapter(successfulQueryBySlug, {
+        getTTL() { return 0; },
+        getIndexes() { return { slug: 'dumb1-modified' }; },
+      }),
+      customCacheIndexes: {
+        any: 'slug',
+      },
+    });
+
+    const dispatched = [];
+    const fakeNext = dispatch => dispatched.push(dispatch);
+    const action = createCallAPIActionFrom(successfulQueryBySlug);
+
+    // CACHED STATE
+    const fakeStore = createFakeStore({ wp: successfulQueryBySlugState });
+    const result = middleware(fakeStore)(fakeNext)(action);
+    expect(result).toBeA(Promise);
+
+    return result.then(() => {
+      expect(dispatched.length).toBe(3);
+      expect(dispatched[0].type).toBe(REDUX_WP_API_CACHE_HIT);
+      expect(dispatched[1].type).toBe(REDUX_WP_API_REQUEST);
+      expect(dispatched[2].type).toBe(REDUX_WP_API_SUCCESS);
+    });
+  });
+
+  it('should dispatch CACHE_HIT action and REQUEST again when cache is partial', () => {
+    const { middleware } = new ReduxWPAPI({
+      adapter: createFakeAdapter(successfulAuthorRequest, {
+        getTTL() { return Infinity; },
+        getIndexes() { return { id: 2 }; },
+      }),
+    });
+
+    const dispatched = [];
+    const fakeNext = dispatch => dispatched.push(dispatch);
+    const action = createCallAPIActionFrom(successfulAuthorRequest);
+
+    // CACHED STATE
+    const fakeStore = createFakeStore({ wp: successfulQueryBySlugState });
+    const result = middleware(fakeStore)(fakeNext)(action);
+    expect(result).toBeA(Promise);
+
+    return result.then(() => {
+      // expect(dispatched.length).toBe(3);
+      expect(dispatched[0].type).toBe(REDUX_WP_API_CACHE_HIT);
+      expect(dispatched[1].type).toBe(REDUX_WP_API_REQUEST);
+      expect(dispatched[2].type).toBe(REDUX_WP_API_SUCCESS);
+    });
+  });
+
 
   it('should dispatch REQUEST and FAILURE action when request is not cached and fails', () => {
     const { middleware } = new ReduxWPAPI({

@@ -3,6 +3,7 @@ const collectionResponse = [
     id: 2,
     slug: 'dumb2',
     dumbAttr: 'dumb2',
+    extraAttr: 'not present when embedded',
     _links: {
       self: [{ href: 'http://wordpress.dev/wp-json/namespace/any/2' }],
       collection: [{ href: 'http://wordpress.dev/wp-json/namespace/any' }],
@@ -49,6 +50,7 @@ const collectionResponse = [
     id: 1,
     slug: 'dumb1',
     dumbAttr: 'dumb1',
+    extraAttr: 'not present when embedded',
     _links: {
       self: [{ href: 'http://wordpress.dev/wp-json/namespace/any/1' }],
       collection: [{ href: 'http://wordpress.dev/wp-json/namespace/any' }],

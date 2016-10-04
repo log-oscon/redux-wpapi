@@ -9,7 +9,7 @@ import collectionRequest from './mocks/actions/collectionRequest';
 import modifyingRequest from './mocks/actions/modifyingRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
 import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
-import successfulOptionsResponse from './mocks/actions/successfulOptionsResponse';
+import successfulOptionsRequest from './mocks/actions/successfulOptionsRequest';
 import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectionRequest';
 import unsuccessfulModifyingRequest from './mocks/actions/unsuccessfulModifyingRequest';
 import cacheHitSingle from './mocks/actions/cacheHitSingle';
@@ -135,9 +135,10 @@ describe('Reducer', () => {
 
       expect(data).toBeAn(Array);
       expect(data.length).toBe(2);
-      expect(state.getIn(['resources', data[0]])).toContain({
-        [Symbols.lastCacheUpdate]: successfulCollectionRequest.meta.responseAt,
-      }, 'lastCacheUpdate should be updated');
+
+      const resource = state.getIn(['resources', data[0]]);
+      expect(resource[Symbols.lastCacheUpdate]).toBe(successfulCollectionRequest.meta.responseAt);
+      expect(resource[Symbols.partial]).toBe(false);
     });
 
     it('should keep local ids instead objects in data, by query\'s cacheID', () => {
@@ -158,9 +159,24 @@ describe('Reducer', () => {
     });
 
     it('should index even if there is no `id` nor customCacheIndexes in the response', () => {
-      const state = reducer(undefined, successfulOptionsResponse);
+      const state = reducer(undefined, successfulOptionsRequest);
       expect(state.getIn(['resources', 0]).blogname)
-      .toBe(successfulOptionsResponse.payload.response[0].blogname);
+      .toBe(successfulOptionsRequest.payload.response[0].blogname);
+    });
+
+    it('mark as partial embedded resources', () => {
+      const state = reducer(undefined, successfulCollectionRequest);
+      const queryState = state.getIn([
+        'requestsByQuery',
+        successfulCollectionRequest.payload.cacheID,
+      ]);
+      const data = queryState.getIn([successfulCollectionRequest.payload.page, 'data']);
+      const resource = state.getIn(['resources', data[0]]);
+      const embeddedAuthor = state.getIn(['resources', resource._embedded.author]);
+      const parentNotPartial = state.getIn(['resources', resource._embedded.parent]);
+
+      expect(embeddedAuthor[Symbols.partial]).toBe(true);
+      expect(parentNotPartial[Symbols.partial]).toBe(false);
     });
 
     it('should persist locally each found resource exactly once', () => {
