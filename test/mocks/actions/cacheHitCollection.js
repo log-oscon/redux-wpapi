@@ -10,7 +10,7 @@ export default {
   },
   meta: {
     name: 'test',
-    aggregator: 'any',
+    url: 'http://wordpress.dev/wp-json/namespace/any',
     operation: 'get',
     requestAt: Date.now(),
   },

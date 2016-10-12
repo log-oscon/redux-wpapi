@@ -9,7 +9,7 @@ export default {
   error: new Error('Network Failure'),
   meta: {
     name: 'test',
-    aggregator: 'any',
+    url: 'http://wordpress.dev/wp-json/namespace/any',
     requestAt: Date.now(),
     responseAt: Date.now(),
     operation: 'get',

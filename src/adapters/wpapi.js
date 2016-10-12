@@ -194,7 +194,7 @@ export default class WPAPIAdapter {
    * @return {Object}         The Request URL
    */
   getUrl({ wpRequest }) {
-    return wpRequest._renderURI();
+    return wpRequest.toString();
   }
 
   /**

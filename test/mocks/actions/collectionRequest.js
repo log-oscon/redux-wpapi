@@ -8,7 +8,7 @@ export default {
   },
   meta: {
     name: 'test',
-    aggregator: 'any',
+    url: 'http://wordpress.dev/wp-json/namespace/any',
     requestAt: Date.now(),
     operation: 'get',
   },
