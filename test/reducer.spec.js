@@ -65,7 +65,7 @@ describe('Reducer', () => {
           .toBe(undefined, 'shouldnt touch data');
         });
 
-        it('should keep by request name the enought data to reach query', () => {
+        it('should have enough information in its request name to reach the query', () => {
           const state = reducer(undefined, collectionRequest);
           const nameState = state.getIn(['requestsByName', collectionRequest.meta.name]);
 
@@ -192,7 +192,7 @@ describe('Reducer', () => {
         .toBe(successfulOptionsRequest.payload.response[0].blogname);
       });
 
-      it('mark as partial embedded resources', () => {
+      it('should mark as partial embedded resources', () => {
         const state = reducer(undefined, successfulCollectionRequest);
         const queryState = state.getIn([
           'requestsByQuery',
@@ -207,7 +207,7 @@ describe('Reducer', () => {
         expect(parentNotPartial[Symbols.partial]).toBe(false);
       });
 
-      it('should persist locally each found resource exactly once', () => {
+      it('should persist locally, exactly once, each resource found', () => {
         const state = reducer(undefined, successfulCollectionRequest);
         const resources = state.get('resources');
         expect(resources.size).toBe(4);
