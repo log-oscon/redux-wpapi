@@ -200,8 +200,11 @@ export default class WPAPIAdapter {
   /**
    * Get aggregator for URL
    *
-   * Infers the aggregator identifier of a given URL to which all resulting resources are going to
-   * be associated with. An aggregator is a set containing resources indexed by its ids and by the
+   * Infers the aggregator identifier of a given URL to which a resulting resource will be
+   * associated with. `additionalData` is available so the decision might also be based on the query
+   * or on the own resource.
+   *
+   * An aggregator is a set containing resources indexed by its ids and by the
    * its custom indexers.
    *
    * @param  {String}      url          URL from which the aggregator will be infered

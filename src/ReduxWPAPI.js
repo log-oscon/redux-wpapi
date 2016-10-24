@@ -43,6 +43,18 @@ export default class ReduxWPAPI {
 
   static defaultSettings = {
     transformResource: nthArg(0),
+
+    /**
+     * Get aggregator for URL
+     *
+     * Infers the aggregator identifier of a given URL to which all resulting resources are going to
+     * be associated with. An aggregator is a set containing resources indexed by its ids and by the
+     * its custom indexers.
+     *
+     * @param  {String}      url          URL from which the aggregator will be infered
+     * @return {String|null} aggregatorID String to which the resource will be associated
+     *                                    with or null, if resources musn't be indexed
+     */
     getAggregator: nthArg(2),
     timeout: 30000,
     ttl: 60000,
