@@ -7,7 +7,7 @@ export default {
     name: 'test',
     requestAt: Date.now(),
     // operation will be injected;
-    aggregator: 'any',
+    url: 'http://wordpress.dev/wp-json/namespace/any',
     params: { /* irrelant to this point */ },
   },
 };

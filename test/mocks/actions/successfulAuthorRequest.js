@@ -10,7 +10,7 @@ export default {
   },
   meta: {
     name: 'test',
-    aggregator: 'users',
+    url: 'http://wordpress.dev/wp-json/wp/v2/users',
     requestAt: Date.now(),
     responseAt: Date.now(),
     operation: 'get',

@@ -43,6 +43,21 @@ export default class ReduxWPAPI {
 
   static defaultSettings = {
     transformResource: nthArg(0),
+
+    /**
+     * Get aggregator for URL
+     *
+     * Infers the aggregator identifier of a given URL to which all resulting resources are going to
+     * be associated with. An aggregator is a set containing resources indexed by its ids and by the
+     * its custom indexers.
+     *
+     * @param  {String}      url                 URL from which the aggregator will be infered
+     * @param  {Object|null} additionalData      Available data about the expected resource
+     * @param  {String}      suggestedAggregator Suggestion given by the adapter
+     * @return {String|null} aggregatorID        String to which the resource will be associated
+     *                                           with or null, if resources musn't be indexed
+     */
+    getAggregator: nthArg(2),
     timeout: 30000,
     ttl: 60000,
   }
@@ -69,7 +84,7 @@ export default class ReduxWPAPI {
     const request = this.adapter.buildRequest(action.payload);
     const meta = {
       name: action.payload.name,
-      aggregator: this.adapter.getAggregator(this.adapter.getUrl(request)),
+      url: this.adapter.getUrl(request),
       operation: this.adapter.getOperation(request),
       requestAt: Date.now(),
     };
@@ -90,7 +105,12 @@ export default class ReduxWPAPI {
 
       const state = store.getState().wp;
       const indexes = this.adapter.getIndexes(request);
-      const resourceLocalID = this.getResourceLocalID(state, meta.aggregator, indexes);
+      const aggregator = this.settings.getAggregator(
+        meta.url,
+        indexes,
+        this.adapter.getAggregator(meta.url)
+      );
+      const resourceLocalID = this.getResourceLocalID(state, aggregator, indexes);
 
       payload.cacheID = this.adapter.generateCacheID(request);
       payload.page = parseInt(this.adapter.getRequestedPage(request) || 1, 10);
@@ -231,7 +251,7 @@ export default class ReduxWPAPI {
       }
       case REDUX_WP_API_SUCCESS: {
         let newState = state;
-        const { payload, meta: { name, aggregator, requestAt, responseAt } } = action;
+        const { payload, meta: { name, url, requestAt, responseAt } } = action;
         const { cacheID, page, response } = payload;
         let body = response;
 
@@ -252,7 +272,7 @@ export default class ReduxWPAPI {
         };
 
         body.forEach(resource => {
-          newState = this.indexResource(newState, aggregator, resource, additionalData, id => {
+          newState = this.indexResource(newState, url, resource, additionalData, id => {
             data.push(id);
           });
         });
@@ -311,9 +331,14 @@ export default class ReduxWPAPI {
     return state.getIn(['resourcesIndexes', aggregator, indexBy, resource[indexBy].toString()]);
   }
 
-  indexResource(state, aggregator, resource, meta, onIndex = noop) {
+  indexResource(state, url, resource, meta, onIndex = noop) {
     let newState = state;
     let _embedded;
+    const aggregator = this.settings.getAggregator(
+      url,
+      resource,
+      this.adapter.getAggregator(url, resource)
+    );
     const curies = (resource._links || {}).curies;
     const _links = this.resolveAliases(resource._links, curies) || {};
     delete _links.curies;
@@ -331,16 +356,13 @@ export default class ReduxWPAPI {
       const embeddedMeta = { ...meta, [partialSymbol]: true };
       forEach(alisedEmbedded, (embeddable, relName) => {
         forEach(_links[relName], (link, index) => {
-          const embeddedAggregator = this.adapter.getAggregator(link.href);
-          if (!embeddedAggregator) return;
-
           let toEmbed = alisedEmbedded[relName][index];
           toEmbed = (isArray(toEmbed) ? toEmbed : [toEmbed]).reduce((collection, toBeEmbedded) => {
             if (toBeEmbedded.code === 'rest_no_route') return collection;
 
             newState = this.indexResource(
               newState,
-              embeddedAggregator,
+              link.href,
               toBeEmbedded,
               embeddedMeta,
               id => collection.push(id)
