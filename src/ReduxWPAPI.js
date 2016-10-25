@@ -99,7 +99,7 @@ export default class ReduxWPAPI {
         ttl = this.adapter.getTTL(request);
       }
 
-      if (ttl !== 0 && !ttl) {
+      if (ttl !== 0 && ttl !== false && !ttl) {
         ttl = this.settings.ttl;
       }
 
