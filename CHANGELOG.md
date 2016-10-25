@@ -11,7 +11,7 @@ Some guidelines in reading this document:
 * Annotations starting with **[BC]** indicates breaking change.
 
 ## [new release]
-* FIX: TTL can be overriden.
+* Fix TTL behavior: It now can be overriden by the consumer when dispatching `callAPI` ([#24](https://github.com/log-oscon/redux-wpapi/pull/24))
 
 ## 1.3.0
 * ([#22](https://github.com/log-oscon/redux-wpapi/pull/22))
