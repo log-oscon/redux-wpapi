@@ -217,6 +217,18 @@ export default class ReduxWPAPI {
           );
         }
 
+        if (!newState.getIn(['requestsByQuery', cacheID, 'pagination'])) {
+          newState = (
+            newState
+            .mergeIn(
+              ['requestsByQuery', cacheID, 'pagination'],
+              {
+                total: 1,
+                totalPages: 1,
+              }
+            )
+          );
+        }
 
         return newState;
       }
