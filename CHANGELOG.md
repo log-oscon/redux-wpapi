@@ -10,7 +10,7 @@ Some guidelines in reading this document:
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
 * Annotations starting with **[BC]** indicates breaking change.
 
-## [new release]
+## 1.3.0
 * ([#22](https://github.com/log-oscon/redux-wpapi/pull/22))
     * Adapter's `getAggregator` is now applied per resource and has `additionalData` in order decide, which might be either the query of the request or the resource itself.
     * `getAggregator` setting is now available, so consumer might also decide per resource. As its third param, the `suggestedAggregator` is supplied contain the adapter's `getAggregator` return.
