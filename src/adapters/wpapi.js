@@ -259,7 +259,7 @@ export default class WPAPIAdapter {
    * @return {Number}         The time to live of request's resources
    */
   getTTL(request) {
-    return request.ttl || this.defaultTTL;
+    return request.ttl === undefined || request.ttl === null ? this.defaultTTL : request.ttl;
   }
 
   /**
