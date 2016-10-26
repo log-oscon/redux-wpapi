@@ -83,16 +83,16 @@ export default class WPAPIAdapter {
   /**
    * Extracts pagination params from Response
    *
-   * It is up to the api decide the shape of pagination, `totalPages` and `total` are a common case.
+   * Pagination requires `totalPages` and `total`.
    *
    * @param {Object|Array} response Response resulted by `callAPI` operation
-   * @return {Object}               Pagination params such as `total` and `totalPages`
+   * @return {Object}               Pagination composed by `total` and `totalPages`.
    */
   getPagination(response) {
     const { total, totalPages } = response._paging || {};
     return {
-      total: parseInt(total || 1, 10),
-      totalPages: parseInt(totalPages || 1, 10),
+      total: parseInt(total || 0, 10),
+      totalPages: parseInt(totalPages || 0, 10),
     };
   }
 
