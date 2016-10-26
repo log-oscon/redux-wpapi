@@ -1,5 +1,4 @@
 import find from 'lodash/find';
-import isUndefined from 'lodash/isUndefined';
 import findKey from 'lodash/findKey';
 import reduce from 'lodash/reduce';
 import capitalize from 'lodash/capitalize';
@@ -260,7 +259,7 @@ export default class WPAPIAdapter {
    * @return {Number}         The time to live of request's resources
    */
   getTTL(request) {
-    return isUndefined(request.ttl) || request.ttl === null ? this.defaultTTL : request.ttl;
+    return request.ttl === undefined || request.ttl === null ? this.defaultTTL : request.ttl;
   }
 
   /**
