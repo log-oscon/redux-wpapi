@@ -1,6 +1,6 @@
 {
   "name": "redux-wpapi",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Wordpress integration Redux middleware based on node-wpapi.",
   "main": "lib/index.js",
   "files": [
