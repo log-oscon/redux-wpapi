@@ -322,7 +322,7 @@ describe('Reducer', () => {
         getAggregator(url, additionalData, suggestedAggregator) {
           if (url.match(/\/search\/?/)) {
             if (additionalData && additionalData._links && additionalData._links.self) {
-              return additionalData._links.self[0].href.replace(/.*\/(.*?)\/[^\/]*$/, '$1');
+              return additionalData._links.self[0].href.replace(/.*\/(.*?)\/[^/]*$/, '$1');
             }
           }
 
