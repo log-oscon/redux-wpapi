@@ -7,6 +7,7 @@ import { pending, resolved, rejected } from '../src/constants/requestStatus';
 import * as Symbols from '../src/symbols';
 import collectionRequest from './mocks/actions/collectionRequest';
 import modifyingRequest from './mocks/actions/modifyingRequest';
+import successfulAuthorRequest from './mocks/actions/successfulAuthorRequest';
 import successfulCollectionRequest from './mocks/actions/successfulCollectionRequest';
 import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
 import successfulOptionsRequest from './mocks/actions/successfulOptionsRequest';
@@ -207,6 +208,16 @@ describe('Reducer', () => {
         expect(parentNotPartial[Symbols.partial]).toBe(false);
       });
 
+      it('should never mark complete resources as partial', () => {
+        let previousState = reducer(undefined, successfulAuthorRequest);
+        console.log('-----------------'); // eslint-disable-line
+        previousState = reducer(previousState, successfulCollectionRequest);
+        console.log('-----------------'); // eslint-disable-line
+        const state = reducer(previousState, cacheHitSingle);
+        console.log('-----------------'); // eslint-disable-line
+        expect(state.getIn(['resources', 0])[Symbols.partial]).toBe(false);
+      });
+
       it('should persist locally, exactly once, each resource found', () => {
         const state = reducer(undefined, successfulCollectionRequest);
         const resources = state.get('resources');
@@ -352,4 +363,3 @@ describe('Reducer', () => {
     });
   });
 });
-
