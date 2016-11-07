@@ -210,11 +210,8 @@ describe('Reducer', () => {
 
       it('should never mark complete resources as partial', () => {
         let previousState = reducer(undefined, successfulAuthorRequest);
-        console.log('-----------------'); // eslint-disable-line
         previousState = reducer(previousState, successfulCollectionRequest);
-        console.log('-----------------'); // eslint-disable-line
         const state = reducer(previousState, cacheHitSingle);
-        console.log('-----------------'); // eslint-disable-line
         expect(state.getIn(['resources', 0])[Symbols.partial]).toBe(false);
       });
 
