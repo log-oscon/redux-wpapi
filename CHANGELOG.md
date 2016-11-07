@@ -11,7 +11,7 @@ Some guidelines in reading this document:
 * Annotations starting with **[BC]** indicates breaking change.
 
 ## [new release]
-* Fix [#26](https://github.com/log-oscon/redux-wpapi/issues/26): Incoming partial resources shouldn't change the complete resource in cache to partial, just update it.
+* Fix [#26](https://github.com/log-oscon/redux-wpapi/issues/26): Incoming partial resources shouldn't change the complete resource in cache to partial, just update it. ([#27](https://github.com/log-oscon/redux-wpapi/pull/27))
 
 ## [1.3.1]
 * Fix: Ensures pagination shape and presence in response. ([#25](https://github.com/log-oscon/redux-wpapi/pull/25))
