@@ -401,7 +401,7 @@ export default class ReduxWPAPI {
     }
 
     let isPartial = meta[partialSymbol] || false;
-    if (oldState !== emptyState && oldState[partialSymbol] && !meta[partialSymbol]) {
+    if (oldState !== emptyState && (!oldState[partialSymbol] || !meta[partialSymbol])) {
       isPartial = false;
     }
 

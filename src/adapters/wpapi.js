@@ -177,7 +177,7 @@ export default class WPAPIAdapter {
     switch (linkRenamed) {
       case 'featuredmedia': linkRenamed = 'featured_media'; break;
       case 'term':
-        linkRenamed = link.href.replace(/\?.*$/, '').replace(/.*\/([^\/]+)$/, '$1');
+        linkRenamed = link.href.replace(/\?.*$/, '').replace(/.*\/([^/]+)$/, '$1');
         break;
       default:
     }
