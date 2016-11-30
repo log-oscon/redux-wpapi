@@ -302,8 +302,8 @@ export default class WPAPIAdapter {
    * @param  {Object}  request Provided by consumer through the action `request` param
    * @return {Promise}         The future result of the operation
    */
-  sendRequest({ wpRequest, operation }) {
+  sendRequest({ wpRequest, operation, body }) {
     // Embeds any directly embeddable resource linked to current resource(s)
-    return wpRequest.embed()[operation](wpRequest._body);
+    return wpRequest.embed()[operation](body);
   }
 }
