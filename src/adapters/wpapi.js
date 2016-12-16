@@ -153,7 +153,7 @@ export default class WPAPIAdapter {
     delete wpRequest._params.page;
     delete wpRequest._params._embed;
 
-    const cacheID = wpRequest._renderURI();
+    const cacheID = wpRequest.toString();
 
     wpRequest._params.page = page;
     wpRequest._params._embed = _embed;
