@@ -13,7 +13,7 @@ import unsuccessfulCollectionRequest from './mocks/actions/unsuccessfulCollectio
 import successfulQueryBySlug from './mocks/actions/successfulQueryBySlug';
 import { createFakeStore } from './mocks/store';
 import { initialReducerState } from '../src/ReduxWPAPI';
-import { resolved, rejected } from '../src/constants/requestStatus';
+import { resolved, pending, rejected } from '../src/constants/requestStatus';
 import * as Symbols from '../src/symbols';
 
 import {
@@ -35,6 +35,26 @@ const createCallAPIActionFrom = ({
     additionalParams: !Array.isArray(response) ? response : {},
   },
 });
+
+
+const pendingState = initialReducerState.set('resources', new Immutable.List([]))
+.set('resourcesIndexes', Immutable.fromJS({ any: { slug: {}, id: {} }, users: { id: {} } }))
+.mergeIn(
+  ['requestsByName', successfulQueryBySlug.meta.name],
+  {
+    cacheID: successfulQueryBySlug.payload.cacheID,
+    page: successfulQueryBySlug.payload.page,
+  }
+)
+.mergeIn(
+  ['requestsByQuery', successfulQueryBySlug.payload.cacheID, successfulQueryBySlug.payload.page],
+  {
+    status: pending,
+    error: false,
+    data: false,
+    requestAt: new Date(),
+  }
+);
 
 const successfulQueryBySlugState = initialReducerState.set(
   'resources',
@@ -138,6 +158,34 @@ describe('Middleware', () => {
           responseAt: dispatched[1].meta.responseAt,
         },
       });
+    });
+  });
+
+  it('should reuse promises for two identical subsequential pending request', () => {
+    let done;
+    const { middleware } = new ReduxWPAPI({
+      adapter: createFakeAdapter(successfulQueryBySlug),
+      sendRequest() {
+        const promise = new Promise(resolve => {
+          done = () => resolve(successfulQueryBySlug.payload.response);
+        });
+        return promise;
+      },
+    });
+
+    const dispatched = [];
+    const fakeNext = dispatch => dispatched.push(dispatch);
+
+    const action = createCallAPIActionFrom(successfulQueryBySlug);
+    const requestA = middleware(createFakeStore())(fakeNext)(action);
+    const requestB = middleware(createFakeStore({ wp: pendingState }))(fakeNext)(action);
+
+    expect(requestA).toBeA(Promise);
+    expect(requestB).toBe(requestA);
+    setTimeout(() => done());
+
+    return requestB.then(() => {
+      expect(dispatched.length).toBe(3);
     });
   });
 
@@ -328,4 +376,3 @@ describe('Middleware', () => {
     });
   });
 });
-

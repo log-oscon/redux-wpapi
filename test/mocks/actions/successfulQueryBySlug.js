@@ -10,7 +10,7 @@ export default {
   },
   meta: {
     name: 'test',
-    url: 'http://wordpress.dev/wp-json/namespace/any',
+    url: 'http://wordpress.dev/wp-json/namespace/any?slug=dumb1-modified',
     requestAt: Date.now(),
     responseAt: Date.now(),
     operation: 'get',
