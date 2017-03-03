@@ -10,13 +10,11 @@ Some guidelines in reading this document:
 * Being that these are the early days of the repository, we have some code changes that were added directly and without much detail, for these we have a link to the commit instead of the PR.
 * Annotations starting with **[BC]** indicates breaking change.
 
-## 1.3.4
+## [new release]
+* Fix [#29](https://github.com/log-oscon/redux-wpapi/issues/29): Reuse same promise for two identical subsequential GET requests where the first was'nt resolved yet. ([#31](https://github.com/log-oscon/redux-wpapi/pull/31))
+
+## 1.3.3
 * WPAPI adapter: upgrades to newest version of [wpapi](https://github.com/WP-API/node-wpapi/)
-
-## 1.3.3
-* WPAPI adapter: body of modifying requests wasn't being sent due a typo.
-
-## 1.3.3
 * WPAPI adapter: body of modifying requests wasn't being sent due a typo.
 
 ## 1.3.2
