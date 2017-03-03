@@ -14,7 +14,6 @@ Some guidelines in reading this document:
 * Fix [#29](https://github.com/log-oscon/redux-wpapi/issues/29): Reuse same promise for two identical subsequential GET requests where the first was'nt resolved yet. ([#31](https://github.com/log-oscon/redux-wpapi/pull/31))
 
 ## 1.3.3
-* WPAPI adapter: upgrades to newest version of [wpapi](https://github.com/WP-API/node-wpapi/)
 * WPAPI adapter: body of modifying requests wasn't being sent due a typo.
 
 ## 1.3.2
