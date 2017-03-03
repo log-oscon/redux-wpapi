@@ -11,7 +11,7 @@ Some guidelines in reading this document:
 * Annotations starting with **[BC]** indicates breaking change.
 
 ## [new release]
-* Fix [#29](https://github.com/log-oscon/redux-wpapi/issues/29): Reuse same promise for two identical subsequential GET requests where the first was'nt resolved yet. ([#31](https://github.com/log-oscon/redux-wpapi/pull/31))
+* Fix [#29](https://github.com/log-oscon/redux-wpapi/issues/29): Reuse same promise for two identical subsequential GET requests where the first wasn't resolved yet. ([#31](https://github.com/log-oscon/redux-wpapi/pull/31))
 
 ## 1.3.3
 * WPAPI adapter: body of modifying requests wasn't being sent due a typo.
