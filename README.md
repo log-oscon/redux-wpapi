@@ -73,9 +73,9 @@ export class HomePage extends React.Component {
   }
 }
 
-export default connect({
+export default connect(createStructuredSelector({
   request: selectRequest('HomePagePosts'),
-}, { callAPI })(HomePage);
+}), { callAPI })(HomePage);
 ```
 
 ## Contributions
