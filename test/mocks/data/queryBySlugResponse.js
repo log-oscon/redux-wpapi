@@ -36,4 +36,3 @@ queryBySlugResponse._paging = {
 };
 
 export default queryBySlugResponse;
-

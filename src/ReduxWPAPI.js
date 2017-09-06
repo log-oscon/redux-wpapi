@@ -62,6 +62,8 @@ export default class ReduxWPAPI {
     ttl: 60000,
   }
 
+  pendingRequests = {}
+
   constructor({ adapter, ...settings }) {
     this.settings = defaultsDeep({}, settings, ReduxWPAPI.defaultSettings);
 
@@ -95,6 +97,7 @@ export default class ReduxWPAPI {
       let lastCacheUpdate;
       let data;
       let ttl;
+
       if (this.adapter.getTTL) {
         ttl = this.adapter.getTTL(request);
       }
@@ -148,7 +151,8 @@ export default class ReduxWPAPI {
         });
 
         if (Date.now() - lastCacheUpdate < ttl) {
-          return Promise.resolve(
+          const previouslyPending = this.pendingRequests[this.getPendingRequestID(request)];
+          return previouslyPending || Promise.resolve(
             selectRequest({
               cacheID: payload.cacheID,
               page: payload.page,
@@ -164,7 +168,7 @@ export default class ReduxWPAPI {
       meta,
     });
 
-    return (
+    const promise = (
       this.adapter.sendRequest(request)
       .then(
         response =>
@@ -188,10 +192,16 @@ export default class ReduxWPAPI {
             page: payload.page,
           })(store.getState());
         }
-
+        delete this.pendingRequests[this.getPendingRequestID(request)];
         return selectRequest(meta.name)(store.getState());
       })
     );
+
+    if (meta.operation === 'get') {
+      this.pendingRequests[this.getPendingRequestID(request)] = promise;
+    }
+
+    return promise;
   }
 
   reducer = (state = initialReducerState, action) => {
@@ -445,5 +455,12 @@ export default class ReduxWPAPI {
         cury.href.replace(/\{rel\}/g, key.replace(alias, ''))
       );
     }, map) || map;
+  }
+
+  getPendingRequestID(request) {
+    return [
+      parseInt(this.adapter.getRequestedPage(request) || 1, 10),
+      this.adapter.getUrl(request),
+    ].join(':');
   }
 }
